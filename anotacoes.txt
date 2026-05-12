@@ -1,3 +1,6 @@
 python3 -m venv venv (Criar Ambiente Virtual)
-venv\Scripts\activate (Ativar ambiente)
+venv\Scripts\activate (Ativar ambiente Windows)
+source venv/bin/activate (Atiivar ambiente Linux)
 pip install -r requirements.txt (Instalar dependências)
+
+python3 manage.py runserver
