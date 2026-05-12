@@ -17,7 +17,14 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+
+'''
+Adiciona aqui as rotas do admins e da API de cada módulo, conforme a rota de departamento.
+Por enquanto, só faremos as rotas de API para consumir os dados no futuro.
+Os templates e views para o frontend serão feitos depois, e as rotas para o frontend serão adicionadas aqui também.
+'''
 urlpatterns = [
+
     path('admin/', admin.site.urls),
     path('api/v1/departamentos/', include('departamentos.urls')),
 ]

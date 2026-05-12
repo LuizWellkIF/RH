@@ -7,8 +7,11 @@ class DepartamentoSerializer(serializers.ModelSerializer):
         fields = '__all__'
         
     def validate_sigla(self, value):
+        '''
+        Verifica se já existe um departamento com a mesma sigla, ignorando o caso e espaços em branco.
+        '''
         value = value.upper().strip()
-        '''Verifica se já existe um departamento com a mesma sigla, ignorando o caso e espaços em branco.'''
+        
         qs = Departamento.objects.filter(sigla=value)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
