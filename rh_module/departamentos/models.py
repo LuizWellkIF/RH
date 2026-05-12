@@ -11,7 +11,7 @@ class Departamento(models.Model):
     sigla = models.CharField(max_length=50, unique=True)
     
     class Meta:
-        db_table = 'departamento'
+        db_table = 'departamentos'
         ordering = ['nome']
         
     def __str__(self):
