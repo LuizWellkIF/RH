@@ -3,4 +3,5 @@ venv\Scripts\activate (Ativar ambiente Windows)
 source venv/bin/activate (Atiivar ambiente Linux)
 pip install -r requirements.txt (Instalar dependências)
 
+
 python3 manage.py runserver
