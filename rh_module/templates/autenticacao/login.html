@@ -1,0 +1,233 @@
+{% extends 'base.html' %}
+
+{% block title %}Login — RH Sistema{% endblock %}
+
+{% block extra_head %}
+<style>
+  body { background: #0F1923; }
+
+  .login-wrap {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 460px;
+  }
+
+  /* ── Painel esquerdo ── */
+  .login-left {
+    background: #1A3C5E;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+    padding: 48px 56px;
+    position: relative; overflow: hidden;
+  }
+  .login-left::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 600px 500px at 20% 80%, rgba(109,179,242,.12) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 400px at 80% 10%, rgba(255,255,255,.04) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .left-brand { position: relative; z-index: 1; }
+  .left-brand .label {
+    font-size: 10px; font-weight: 600; letter-spacing: .14em;
+    text-transform: uppercase; color: rgba(255,255,255,.35);
+    margin-bottom: 8px;
+  }
+  .left-brand .name {
+    font-size: 26px; font-weight: 600; color: #fff; line-height: 1.1;
+  }
+  .left-brand .name span { color: #6DB3F2; }
+
+  .left-body { position: relative; z-index: 1; }
+  .left-body h2 {
+    font-size: 36px; font-weight: 300; color: #fff; line-height: 1.2;
+    margin-bottom: 16px; letter-spacing: -.02em;
+  }
+  .left-body h2 strong { font-weight: 600; }
+  .left-body p {
+    font-size: 14px; color: rgba(255,255,255,.5); line-height: 1.7; max-width: 340px;
+  }
+
+  .left-modules {
+    position: relative; z-index: 1;
+    display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .module-pill {
+    padding: 5px 13px; border-radius: 20px;
+    font-size: 11px; font-weight: 500;
+    background: rgba(255,255,255,.07);
+    color: rgba(255,255,255,.45);
+    border: 1px solid rgba(255,255,255,.1);
+    letter-spacing: .02em;
+  }
+  .module-pill.active {
+    background: rgba(109,179,242,.15);
+    color: #6DB3F2;
+    border-color: rgba(109,179,242,.3);
+  }
+
+  /* ── Painel direito (formulário) ── */
+  .login-right {
+    background: #F4F3EF;
+    display: flex; align-items: center; justify-content: center;
+    padding: 48px 40px;
+  }
+
+  .login-card {
+    width: 100%; max-width: 360px;
+  }
+  .login-card h1 {
+    font-size: 22px; font-weight: 600; color: #0F1923;
+    margin-bottom: 4px;
+  }
+  .login-card .subtitle {
+    font-size: 13px; color: #5A6470; margin-bottom: 36px;
+  }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block; margin-bottom: 6px;
+    font-size: 11px; font-weight: 600;
+    letter-spacing: .06em; text-transform: uppercase;
+    color: #5A6470;
+  }
+  .form-control {
+    width: 100%; padding: 11px 14px;
+    border: 1px solid #E2E0D8; border-radius: 9px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; color: #0F1923;
+    background: #fff; outline: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .form-control:focus {
+    border-color: #2E6DA4;
+    box-shadow: 0 0 0 3px rgba(46,109,164,.12);
+  }
+
+  .form-errors {
+    margin-top: 5px;
+  }
+  .form-errors li {
+    font-size: 12px; color: #C0392B; list-style: none;
+  }
+
+  .login-error {
+    background: #FDECEB; border: 1px solid #F0C0BC;
+    border-radius: 9px; padding: 11px 14px;
+    font-size: 13px; color: #C0392B;
+    margin-bottom: 20px;
+  }
+
+  .btn-login {
+    width: 100%; padding: 12px;
+    background: #1A3C5E; color: #fff;
+    border: none; border-radius: 9px;
+    font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+    cursor: pointer; margin-top: 8px;
+    transition: background .15s, transform .1s;
+  }
+  .btn-login:hover { background: #162F4A; }
+  .btn-login:active { transform: scale(.99); }
+
+  .login-footer {
+    margin-top: 28px; text-align: center;
+    font-size: 12px; color: #9AA3AD;
+  }
+
+  @media (max-width: 768px) {
+    .login-wrap { grid-template-columns: 1fr; }
+    .login-left { display: none; }
+    .login-right { background: #0F1923; }
+    .login-card h1 { color: #fff; }
+    .login-card .subtitle { color: rgba(255,255,255,.5); }
+    .form-control { background: #1A2A38; border-color: rgba(255,255,255,.1); color: #fff; }
+    .form-label { color: rgba(255,255,255,.5); }
+  }
+</style>
+{% endblock %}
+
+{% block auth_content %}
+<div class="login-wrap">
+
+  <!-- Esquerda -->
+  <div class="login-left">
+    <div class="left-brand">
+      <div class="label">Módulo</div>
+      <div class="name">RH <span>Sistema</span></div>
+    </div>
+
+    <div class="left-body">
+      <h2>Gestão de<br><strong>Recursos Humanos</strong></h2>
+      <p>Plataforma integrada para administração de funcionários, ponto eletrônico, férias e estrutura organizacional.</p>
+    </div>
+
+    <div class="left-modules">
+      <span class="module-pill active">● Módulo RH</span>
+      <span class="module-pill">Financeiro</span>
+      <span class="module-pill">Estoque</span>
+      <span class="module-pill">Vendas</span>
+      <span class="module-pill">Suporte</span>
+    </div>
+  </div>
+
+  <!-- Direita -->
+  <div class="login-right">
+    <div class="login-card">
+      <h1>Bem-vindo</h1>
+      <p class="subtitle">Acesse com suas credenciais do sistema</p>
+
+      {% if form.non_field_errors %}
+        <div class="login-error">
+          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.username.id_for_label }}">Usuário</label>
+          <input
+            type="text"
+            id="{{ form.username.id_for_label }}"
+            name="{{ form.username.html_name }}"
+            class="form-control"
+            placeholder="Seu usuário"
+            value="{{ form.username.value|default:'' }}"
+            autofocus
+          />
+          {% if form.username.errors %}
+            <ul class="form-errors">
+              {% for e in form.username.errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="{{ form.password.id_for_label }}">Senha</label>
+          <input
+            type="password"
+            id="{{ form.password.id_for_label }}"
+            name="{{ form.password.html_name }}"
+            class="form-control"
+            placeholder="••••••••"
+          />
+          {% if form.password.errors %}
+            <ul class="form-errors">
+              {% for e in form.password.errors %}<li>{{ e }}</li>{% endfor %}
+            </ul>
+          {% endif %}
+        </div>
+
+        <button type="submit" class="btn-login">Entrar</button>
+      </form>
+
+      <div class="login-footer">
+        Problemas de acesso? Fale com o Gerente de RH.
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

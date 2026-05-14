@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-
+from django.shortcuts import redirect
 
 '''
 Adiciona aqui as rotas do admins e da API de cada módulo, conforme a rota de departamento.
@@ -26,5 +26,7 @@ Os templates e views para o frontend serão feitos depois, e as rotas para o fro
 urlpatterns = [
 
     path('admin/', admin.site.urls),
+    path('', lambda request: redirect('dashboard'), name='home'),
+    path('', include('autenticacao.urls')),
     path('api/v1/departamentos/', include('departamentos.urls')),
 ]
