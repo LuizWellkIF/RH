@@ -12,13 +12,13 @@ class UserProfile(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
-    '''funcionario = models.OneToOneField(
-        'funcionario.Funcionario',
+    funcionario = models.OneToOneField(
+        'funcionarios.Funcionario',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='user_profile'
-    )'''
+    )
     cargo_rh = models.CharField(max_length=20, choices=CARGO_RH_CHOICES)
 
     class Meta:
