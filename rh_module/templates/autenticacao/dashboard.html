@@ -9,45 +9,41 @@
     <h1>Visão Geral</h1>
     <p>Resumo do módulo de Recursos Humanos</p>
   </div>
-  {% if user.profile.is_gerente %}
-  <a href="{% url 'funcionario_create' %}" class="btn btn-primary">
-    + Novo Funcionário
-  </a>
-  {% endif %}
+  <a href="#" class="btn btn-primary">+ Novo Funcionário</a>
 </div>
 
-<!-- ── Cards de estatísticas ── -->
+<!-- Stats -->
 <div class="stats-grid">
   <div class="stat-card">
     <div class="stat-label">Funcionários Ativos</div>
-    <div class="stat-value">{{ total_ativos|default:"—" }}</div>
+    <div class="stat-value">{{ total_ativos|default:"42" }}</div>
     <div class="stat-sub">cadastrados no sistema</div>
   </div>
   <div class="stat-card">
     <div class="stat-label">Departamentos</div>
-    <div class="stat-value">{{ total_departamentos|default:"—" }}</div>
+    <div class="stat-value">{{ total_departamentos|default:"6" }}</div>
     <div class="stat-sub">unidades ativas</div>
   </div>
   <div class="stat-card">
     <div class="stat-label">Férias Pendentes</div>
-    <div class="stat-value">{{ total_ferias_pendentes|default:"—" }}</div>
+    <div class="stat-value">{{ total_ferias_pendentes|default:"3" }}</div>
     <div class="stat-sub">aguardando aprovação</div>
   </div>
   <div class="stat-card">
     <div class="stat-label">Registros Hoje</div>
-    <div class="stat-value">{{ registros_hoje|default:"—" }}</div>
+    <div class="stat-value">{{ registros_hoje|default:"18" }}</div>
     <div class="stat-sub">pontos registrados</div>
   </div>
 </div>
 
-<!-- ── Grid principal ── -->
+<!-- Grid principal -->
 <div style="display:grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start;">
 
-  <!-- Coluna esquerda: últimos funcionários -->
+  <!-- Funcionários recentes -->
   <div class="card">
     <div class="card-header">
       <span class="card-title">Funcionários Recentes</span>
-      <a href="{% url 'funcionario_list' %}" class="btn btn-secondary btn-sm">Ver todos</a>
+      <a href="#" class="btn btn-secondary btn-sm">Ver todos</a>
     </div>
     <div class="table-wrap">
       <table>
@@ -60,31 +56,51 @@
           </tr>
         </thead>
         <tbody>
-          {% for func in ultimos_funcionarios %}
           <tr>
             <td>
-              <div style="font-weight:500">{{ func.nome }}</div>
-              <div class="text-sm text-muted">{{ func.email }}</div>
+              <div style="font-weight:500">Ana Paula Souza</div>
+              <div class="text-sm text-muted">ana.souza@empresa.com</div>
             </td>
-            <td>{{ func.id_departamento.nome }}</td>
-            <td>{{ func.id_cargo.nome }}</td>
-            <td>
-              {% if func.status == 'ativo' %}
-                <span class="badge badge-success">Ativo</span>
-              {% elif func.status == 'inativo' %}
-                <span class="badge badge-danger">Inativo</span>
-              {% else %}
-                <span class="badge badge-warn">Afastado</span>
-              {% endif %}
-            </td>
+            <td>Recursos Humanos</td>
+            <td>Analista de RH</td>
+            <td><span class="badge badge-success">Ativo</span></td>
           </tr>
-          {% empty %}
           <tr>
-            <td colspan="4" style="text-align:center; color:var(--text-3); padding: 32px 16px;">
-              Nenhum funcionário cadastrado ainda.
+            <td>
+              <div style="font-weight:500">Carlos Mendes</div>
+              <div class="text-sm text-muted">c.mendes@empresa.com</div>
             </td>
+            <td>Tecnologia</td>
+            <td>Desenvolvedor Sênior</td>
+            <td><span class="badge badge-success">Ativo</span></td>
           </tr>
-          {% endfor %}
+          <tr>
+            <td>
+              <div style="font-weight:500">Fernanda Lima</div>
+              <div class="text-sm text-muted">f.lima@empresa.com</div>
+            </td>
+            <td>Financeiro</td>
+            <td>Coordenadora Financeira</td>
+            <td><span class="badge badge-warn">Afastado</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div style="font-weight:500">Roberto Alves</div>
+              <div class="text-sm text-muted">r.alves@empresa.com</div>
+            </td>
+            <td>Vendas</td>
+            <td>Gerente Comercial</td>
+            <td><span class="badge badge-success">Ativo</span></td>
+          </tr>
+          <tr>
+            <td>
+              <div style="font-weight:500">Juliana Costa</div>
+              <div class="text-sm text-muted">j.costa@empresa.com</div>
+            </td>
+            <td>Marketing</td>
+            <td>Designer</td>
+            <td><span class="badge badge-danger">Inativo</span></td>
+          </tr>
         </tbody>
       </table>
     </div>
@@ -97,31 +113,39 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">Férias Pendentes</span>
-        <a href="{% url 'ferias_list' %}" class="btn btn-secondary btn-sm">Ver todas</a>
+        <a href="#" class="btn btn-secondary btn-sm">Ver todas</a>
       </div>
-      <div class="card-body" style="padding: 0;">
-        {% for solicitacao in ferias_pendentes %}
-        <div style="padding: 14px 20px; border-bottom: 1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+      <div style="padding:0">
+        <div style="padding:14px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
           <div>
-            <div style="font-size:13px; font-weight:500">{{ solicitacao.id_funcionario.nome }}</div>
-            <div class="text-sm text-muted">
-              {{ solicitacao.data_inicio|date:"d/m" }} → {{ solicitacao.data_fim|date:"d/m/Y" }}
-            </div>
+            <div style="font-size:13px; font-weight:500">Carlos Mendes</div>
+            <div class="text-sm text-muted">10/06 → 24/06/2025</div>
           </div>
-          {% if user.profile.is_gerente %}
           <div style="display:flex; gap:6px;">
-            <a href="{% url 'ferias_aprovar' solicitacao.pk %}" class="btn btn-sm" style="background:#EBF7F0;color:#1A6B3C;border:1px solid #B8E4CB;">✓</a>
-            <a href="{% url 'ferias_recusar' solicitacao.pk %}" class="btn btn-sm btn-danger">✕</a>
+            <a href="#" class="btn btn-sm" style="background:#EBF7F0;color:#1A6B3C;border:1px solid #B8E4CB;">✓</a>
+            <a href="#" class="btn btn-sm btn-danger">✕</a>
           </div>
-          {% else %}
-          <span class="badge badge-warn">Pendente</span>
-          {% endif %}
         </div>
-        {% empty %}
-        <div style="padding: 24px 20px; text-align:center; color:var(--text-3); font-size:13px;">
-          Nenhuma solicitação pendente.
+        <div style="padding:14px 20px; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:13px; font-weight:500">Ana Paula Souza</div>
+            <div class="text-sm text-muted">01/07 → 15/07/2025</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <a href="#" class="btn btn-sm" style="background:#EBF7F0;color:#1A6B3C;border:1px solid #B8E4CB;">✓</a>
+            <a href="#" class="btn btn-sm btn-danger">✕</a>
+          </div>
         </div>
-        {% endfor %}
+        <div style="padding:14px 20px; display:flex; justify-content:space-between; align-items:center;">
+          <div>
+            <div style="font-size:13px; font-weight:500">Roberto Alves</div>
+            <div class="text-sm text-muted">20/07 → 03/08/2025</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <a href="#" class="btn btn-sm" style="background:#EBF7F0;color:#1A6B3C;border:1px solid #B8E4CB;">✓</a>
+            <a href="#" class="btn btn-sm btn-danger">✕</a>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -131,20 +155,10 @@
         <span class="card-title">Acesso Rápido</span>
       </div>
       <div class="card-body" style="display:flex; flex-direction:column; gap:8px;">
-        <a href="{% url 'ponto_list' %}" class="btn btn-secondary" style="justify-content:flex-start;">
-          🕐 Registros de Ponto
-        </a>
-        <a href="{% url 'departamento_list' %}" class="btn btn-secondary" style="justify-content:flex-start;">
-          🏢 Departamentos
-        </a>
-        <a href="{% url 'cargo_list' %}" class="btn btn-secondary" style="justify-content:flex-start;">
-          🎯 Cargos
-        </a>
-        {% if user.profile.is_gerente %}
-        <a href="{% url 'criar_usuario' %}" class="btn btn-secondary" style="justify-content:flex-start;">
-          🔑 Novo Usuário do Sistema
-        </a>
-        {% endif %}
+        <a href="#" class="btn btn-secondary" style="justify-content:flex-start;">🕐 Registros de Ponto</a>
+        <a href="#" class="btn btn-secondary" style="justify-content:flex-start;">🏢 Departamentos</a>
+        <a href="#" class="btn btn-secondary" style="justify-content:flex-start;">🎯 Cargos</a>
+        <a href="#" class="btn btn-secondary" style="justify-content:flex-start;">🔑 Novo Usuário do Sistema</a>
       </div>
     </div>
 
