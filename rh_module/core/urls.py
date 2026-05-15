@@ -29,4 +29,5 @@ urlpatterns = [
     path('', lambda request: redirect('dashboard'), name='home'),
     path('', include('autenticacao.urls')),
     path('api/v1/departamentos/', include('departamentos.urls')),
+    path('api/v1/cargo/', include('cargo.urls')),
 ]
