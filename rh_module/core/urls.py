@@ -32,4 +32,5 @@ urlpatterns = [
     path('api/v1/cargo/', include('cargo.urls')),
     path('api/v1/funcionarios/', include('funcionarios.urls')),
     path('api/v1/ponto/', include('ponto.urls')),
+    path('api/v1/ferias/', include('ferias.urls')),
 ]

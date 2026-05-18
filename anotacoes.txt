@@ -1,7 +1,9 @@
 python -m venv venv (Criar ambiente virtual no Windows)
+
 .\venv\Scripts\Activate.ps1 (Ativar ambiente no PowerShell)
 venv\Scripts\activate.bat (Ativar ambiente no CMD)
 source venv/bin/activate (Ativar ambiente no Linux)
+
 python -m pip install -r requirements.txt (Instalar dependencias)
 
 python rh_module\manage.py runserver

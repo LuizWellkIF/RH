@@ -1,11 +1,20 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.models import User
 from django.contrib import messages
+from django.utils import timezone
+
 from .forms import LoginForm, CriarUsuarioForm, AlterarSenhaForm
 from .models import UserProfile
 
-# Create your views here.
+from funcionarios.models import Funcionario
+from departamentos.models import Departamento
+from ponto.models import RegistroPonto
+from ferias.models import SolicitacaoFerias
+
+
+# ── Autenticação ──────────────────────────────────────────────────────────────
 
 def login_view(request):
     if request.user.is_authenticated:
@@ -27,27 +36,60 @@ def logout_view(request):
     return redirect('login')
 
 
+# ── Dashboard ─────────────────────────────────────────────────────────────────
+
 @login_required
 def dashboard_view(request):
+    hoje = timezone.now()
+
     context = {
-        # Esses valores serão preenchidos conforme os outros apps forem criados
-        'total_ativos': 0,
-        'total_departamentos': 0,
-        'total_ferias_pendentes': 0,
-        'registros_hoje': 0,
-        'ultimos_funcionarios': [],
-        'ferias_pendentes': [],
+        # Funcionários
+        'total_ativos': Funcionario.objects.filter(status='ativo').count(),
+        'total_afastados': Funcionario.objects.filter(status='afastado').count(),
+        'total_inativos': Funcionario.objects.filter(status='inativo').count(),
+        'ultimos_funcionarios': Funcionario.objects.select_related(
+            'id_cargo', 'id_departamento'
+        ).order_by('-id_funcionario')[:5],
+
+        # Departamentos
+        'total_departamentos': Departamento.objects.count(),
+
+        # Ponto
+        'registros_hoje': RegistroPonto.objects.filter(
+            data_hora__date=hoje.date()
+        ).count(),
+
+        # Férias
+        'total_ferias_pendentes': SolicitacaoFerias.objects.filter(status='pendente').count(),
+        'ferias_pendentes': SolicitacaoFerias.objects.filter(
+            status='pendente'
+        ).select_related('id_funcionario').order_by('data_inicio')[:3],
     }
+
     return render(request, 'autenticacao/dashboard.html', context)
 
 
-@login_required
-def criar_usuario_view(request):
-    # Apenas gerentes podem cadastrar novos usuários
-    if not request.user.profile.is_gerente:
-        messages.error(request, 'Acesso negado. Apenas gerentes podem cadastrar usuários.')
-        return redirect('dashboard')
+# ── Usuários do sistema ───────────────────────────────────────────────────────
 
+def gerente_required(view_func):
+    """Decorator que restringe acesso a gerentes de RH."""
+    @login_required
+    def wrapper(request, *args, **kwargs):
+        if not request.user.profile.is_gerente:
+            messages.error(request, 'Acesso negado. Apenas gerentes podem acessar esta área.')
+            return redirect('dashboard')
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+@gerente_required
+def listar_usuarios_view(request):
+    usuarios = UserProfile.objects.select_related('user', 'funcionario').all()
+    return render(request, 'autenticacao/listar_usuarios.html', {'usuarios': usuarios})
+
+
+@gerente_required
+def criar_usuario_view(request):
     form = CriarUsuarioForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         form.save()
@@ -57,19 +99,50 @@ def criar_usuario_view(request):
     return render(request, 'autenticacao/criar_usuario.html', {'form': form})
 
 
-@login_required
-def listar_usuarios_view(request):
-    if not request.user.profile.is_gerente:
-        messages.error(request, 'Acesso negado.')
-        return redirect('dashboard')
+@gerente_required
+def editar_usuario_view(request, pk):
+    profile = get_object_or_404(UserProfile, pk=pk)
 
-    usuarios = UserProfile.objects.select_related('user', 'funcionario').all()
-    return render(request, 'autenticacao/listar_usuarios.html', {'usuarios': usuarios})
+    if request.method == 'POST':
+        user = profile.user
+        user.first_name = request.POST.get('first_name', user.first_name)
+        user.last_name = request.POST.get('last_name', user.last_name)
+        user.email = request.POST.get('email', user.email)
+        user.save()
 
+        profile.cargo_rh = request.POST.get('cargo_rh', profile.cargo_rh)
+        profile.save()
+
+        messages.success(request, 'Usuário atualizado com sucesso!')
+        return redirect('listar_usuarios')
+
+    return render(request, 'autenticacao/editar_usuario.html', {'profile': profile})
+
+
+@gerente_required
+def desativar_usuario_view(request, pk):
+    profile = get_object_or_404(UserProfile, pk=pk)
+
+    # Impede o gerente de desativar a si mesmo
+    if profile.user == request.user:
+        messages.error(request, 'Você não pode desativar seu próprio usuário.')
+        return redirect('listar_usuarios')
+
+    if request.method == 'POST':
+        profile.user.is_active = False
+        profile.user.save()
+        messages.success(request, f'Usuário {profile.user.username} desativado.')
+        return redirect('listar_usuarios')
+
+    return render(request, 'autenticacao/confirmar_desativar.html', {'profile': profile})
+
+
+# ── Senha ─────────────────────────────────────────────────────────────────────
 
 @login_required
 def alterar_senha_view(request):
     form = AlterarSenhaForm(request.POST or None)
+
     if request.method == 'POST' and form.is_valid():
         user = request.user
         if not user.check_password(form.cleaned_data['senha_atual']):
