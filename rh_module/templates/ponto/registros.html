@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+
+{% block title %}Consultas — Ponto (API){% endblock %}
+{% block topbar_title %}Consultas (API){% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Consultas de Ponto</h1>
+    <p>Consome os endpoints do DRF para listar, filtrar, excluir e obter o espelho mensal.</p>
+  </div>
+  <a href="{% url 'ponto_registros' %}" class="btn btn-secondary">🕐 Voltar ao bate ponto</a>
+</div>
+
+<!-- garante cookie CSRF para DELETE via fetch -->
+<form method="post" style="display:none">{% csrf_token %}</form>
+
+<div id="apiMessage" class="msg info" style="display:none; margin-bottom: 16px;"></div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items:start; margin-bottom: 16px;">
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Listar registros</span>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label" for="apiFuncionario">Funcionário (id_funcionario)</label>
+        <select id="apiFuncionario" class="form-control">
+          <option value="">Todos</option>
+          {% for f in funcionarios %}
+            <option value="{{ f.id_funcionario }}">{{ f.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="apiTipo">Tipo</label>
+        <select id="apiTipo" class="form-control">
+          {% for value,label in tipos %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-primary" id="btnBuscar">Buscar (GET)</button>
+        <button type="button" class="btn btn-secondary" id="btnLimpar">Limpar</button>
+      </div>
+      <div class="text-sm text-muted" style="margin-top:10px;">
+        Endpoint: <span class="font-mono">/api/v1/ponto/</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Espelho mensal</span>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label" for="espelhoFuncionario">Funcionário (funcionario)</label>
+        <select id="espelhoFuncionario" class="form-control" required>
+          <option value="">Selecione…</option>
+          {% for f in funcionarios %}
+            <option value="{{ f.id_funcionario }}">{{ f.nome }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="button" class="btn btn-secondary" id="btnEspelho">Carregar espelho (GET)</button>
+      <div class="text-sm text-muted" style="margin-top:10px;">
+        Endpoint: <span class="font-mono">/api/v1/ponto/espelho/?funcionario=&lt;id&gt;</span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="card" style="margin-bottom: 16px;">
+  <div class="card-header">
+    <span class="card-title">Resultados (GET /api/v1/ponto/)</span>
+    <span class="badge badge-neutral" id="apiCount">—</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Data/Hora</th>
+          <th>Funcionário</th>
+          <th>Tipo</th>
+          <th>Observação</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="apiTableBody">
+        <tr>
+          <td colspan="6" style="text-align:center; color:var(--text-3); padding:32px 16px;">Use “Buscar” para listar registros.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Espelho do mês atual</span>
+    <span class="badge badge-neutral" id="espelhoMeta">—</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Data/Hora</th>
+          <th>Tipo</th>
+          <th>Observação</th>
+        </tr>
+      </thead>
+      <tbody id="espelhoTableBody">
+        <tr>
+          <td colspan="3" style="text-align:center; color:var(--text-3); padding:32px 16px;">Selecione um funcionário e carregue o espelho.</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+(function () {
+  const msgEl = document.getElementById('apiMessage');
+  const countEl = document.getElementById('apiCount');
+  const bodyEl = document.getElementById('apiTableBody');
+
+  const funcionarioEl = document.getElementById('apiFuncionario');
+  const tipoEl = document.getElementById('apiTipo');
+
+  const espelhoFuncionarioEl = document.getElementById('espelhoFuncionario');
+  const espelhoMetaEl = document.getElementById('espelhoMeta');
+  const espelhoBodyEl = document.getElementById('espelhoTableBody');
+
+  function showMessage(kind, text) {
+    if (!msgEl) return;
+    msgEl.className = `msg ${kind}`;
+    msgEl.textContent = text;
+    msgEl.style.display = 'flex';
+  }
+
+  function clearMessage() {
+    if (!msgEl) return;
+    msgEl.style.display = 'none';
+    msgEl.textContent = '';
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+
+  function escapeHtml(text) {
+    return String(text || '')
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;')
+      .replaceAll("'", '&#039;');
+  }
+
+  function formatDateTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleString('pt-BR', { hour12: false });
+  }
+
+  function renderRows(rows) {
+    if (!bodyEl) return;
+    if (!rows || rows.length === 0) {
+      bodyEl.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; color:var(--text-3); padding:32px 16px;">Nenhum registro encontrado.</td>
+        </tr>
+      `;
+      return;
+    }
+
+    bodyEl.innerHTML = rows.map((r) => {
+      const badgeClass = r.tipo === 'entrada' ? 'badge-success' : (r.tipo === 'saida' ? 'badge-danger' : 'badge-warn');
+      return `
+        <tr>
+          <td class="font-mono">${escapeHtml(r.id_registro)}</td>
+          <td class="font-mono">${escapeHtml(formatDateTime(r.data_hora))}</td>
+          <td>${escapeHtml(r.funcionario_nome || r.id_funcionario)}</td>
+          <td><span class="badge ${badgeClass}">${escapeHtml(r.tipo_display || r.tipo)}</span></td>
+          <td>${escapeHtml(r.observacao || '—')}</td>
+          <td style="text-align:right;">
+            <button type="button" class="btn btn-danger btn-sm" data-del="${escapeHtml(r.id_registro)}">Excluir</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  async function fetchJson(url, options) {
+    const resp = await fetch(url, {
+      credentials: 'same-origin',
+      headers: {
+        'Accept': 'application/json',
+        ...(options && options.headers ? options.headers : {}),
+      },
+      ...options,
+    });
+
+    if (resp.status === 204) return null;
+    const data = await resp.json().catch(() => ({}));
+    if (!resp.ok) {
+      const detail = data && (data.detail || data.erro) ? (data.detail || data.erro) : `Erro HTTP ${resp.status}`;
+      throw new Error(detail);
+    }
+    return data;
+  }
+
+  async function buscarRegistros() {
+    clearMessage();
+    showMessage('info', 'Carregando registros…');
+
+    const params = new URLSearchParams();
+    const idFuncionario = funcionarioEl ? funcionarioEl.value : '';
+    const tipo = tipoEl ? tipoEl.value : '';
+
+    if (idFuncionario) params.set('id_funcionario', idFuncionario);
+    if (tipo) params.set('tipo', tipo);
+
+    const url = '/api/v1/ponto/' + (params.toString() ? `?${params.toString()}` : '');
+
+    try {
+      const data = await fetchJson(url, { method: 'GET' });
+      const rows = Array.isArray(data) ? data : (data.results || []);
+      const count = (typeof data.count === 'number') ? data.count : rows.length;
+      if (countEl) countEl.textContent = `${count} itens`;
+      renderRows(rows);
+      showMessage('success', 'Registros carregados.');
+    } catch (e) {
+      if (countEl) countEl.textContent = '—';
+      renderRows([]);
+      showMessage('error', e && e.message ? e.message : 'Erro ao buscar registros.');
+    }
+  }
+
+  async function excluirRegistro(id) {
+    if (!id) return;
+
+    const token = getCookie('csrftoken');
+    if (!token) {
+      showMessage('error', 'CSRF token não encontrado. Recarregue a página e tente novamente.');
+      return;
+    }
+
+    try {
+      showMessage('info', `Excluindo registro #${id}…`);
+      await fetchJson(`/api/v1/ponto/${id}/`, {
+        method: 'DELETE',
+        headers: {
+          'X-CSRFToken': token,
+        },
+      });
+      showMessage('success', `Registro #${id} excluído.`);
+      await buscarRegistros();
+    } catch (e) {
+      showMessage('error', e && e.message ? e.message : 'Erro ao excluir registro.');
+    }
+  }
+
+  async function carregarEspelho() {
+    clearMessage();
+    const id = espelhoFuncionarioEl ? espelhoFuncionarioEl.value : '';
+    if (!id) {
+      showMessage('warning', 'Selecione um funcionário para carregar o espelho.');
+      return;
+    }
+
+    showMessage('info', 'Carregando espelho…');
+
+    try {
+      const data = await fetchJson(`/api/v1/ponto/espelho/?funcionario=${encodeURIComponent(id)}`, { method: 'GET' });
+      const rows = data && data.registros ? data.registros : [];
+      if (espelhoMetaEl) {
+        const mes = data && data.mes ? data.mes : 'mês atual';
+        const total = (typeof data.total_registros === 'number') ? data.total_registros : rows.length;
+        espelhoMetaEl.textContent = `${mes} • ${total} itens`;
+      }
+
+      if (!rows || rows.length === 0) {
+        espelhoBodyEl.innerHTML = `
+          <tr>
+            <td colspan="3" style="text-align:center; color:var(--text-3); padding:32px 16px;">Nenhum registro no mês atual.</td>
+          </tr>
+        `;
+      } else {
+        espelhoBodyEl.innerHTML = rows.map((r) => {
+          const badgeClass = r.tipo === 'entrada' ? 'badge-success' : (r.tipo === 'saida' ? 'badge-danger' : 'badge-warn');
+          return `
+            <tr>
+              <td class="font-mono">${escapeHtml(formatDateTime(r.data_hora))}</td>
+              <td><span class="badge ${badgeClass}">${escapeHtml(r.tipo_display || r.tipo)}</span></td>
+              <td>${escapeHtml(r.observacao || '—')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      showMessage('success', 'Espelho carregado.');
+    } catch (e) {
+      if (espelhoMetaEl) espelhoMetaEl.textContent = '—';
+      espelhoBodyEl.innerHTML = `
+        <tr>
+          <td colspan="3" style="text-align:center; color:var(--text-3); padding:32px 16px;">Erro ao carregar espelho.</td>
+        </tr>
+      `;
+      showMessage('error', e && e.message ? e.message : 'Erro ao carregar espelho.');
+    }
+  }
+
+  document.getElementById('btnBuscar')?.addEventListener('click', buscarRegistros);
+  document.getElementById('btnLimpar')?.addEventListener('click', function () {
+    if (funcionarioEl) funcionarioEl.value = '';
+    if (tipoEl) tipoEl.value = '';
+    if (countEl) countEl.textContent = '—';
+    renderRows([]);
+    clearMessage();
+    showMessage('info', 'Filtros limpos.');
+  });
+  document.getElementById('btnEspelho')?.addEventListener('click', carregarEspelho);
+
+  bodyEl?.addEventListener('click', function (ev) {
+    const btn = ev.target && ev.target.closest ? ev.target.closest('[data-del]') : null;
+    if (!btn) return;
+    const id = btn.getAttribute('data-del');
+    excluirRegistro(id);
+  });
+})();
+</script>
+{% endblock %}

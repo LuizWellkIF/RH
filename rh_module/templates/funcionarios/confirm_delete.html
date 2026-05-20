@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Funcionário — RH Sistema{% endblock %}
+{% block topbar_title %}Excluir Funcionário{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Excluir funcionário</h1>
+    <p>Esta ação não pode ser desfeita</p>
+  </div>
+  <a href="{% url 'funcionarios_list' %}" class="btn btn-secondary">Voltar</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Confirmação</span>
+  </div>
+  <div class="card-body">
+    <p style="margin-bottom:16px; color: var(--text-2);">
+      Tem certeza que deseja excluir <strong>{{ funcionario.nome }}</strong> (CPF: {{ funcionario.cpf }})?
+    </p>
+
+    <form method="post" style="display:flex; gap:10px;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Sim, excluir</button>
+      <a href="{% url 'funcionarios_list' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+  </div>
+</div>
+{% endblock %}
