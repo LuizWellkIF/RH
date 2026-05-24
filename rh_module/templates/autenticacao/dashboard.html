@@ -9,7 +9,7 @@
     <h1>Visão Geral</h1>
     <p>Resumo do módulo de Recursos Humanos</p>
   </div>
-  <a href="#" class="btn btn-primary">+ Novo Funcionário</a>
+  <a href="{% url 'funcionario_create' %}" class="btn btn-primary">+ Novo Funcionário</a>
 </div>
 
 <!-- Stats -->
@@ -43,7 +43,7 @@
   <div class="card">
     <div class="card-header">
       <span class="card-title">Funcionários Recentes</span>
-      <a href="#" class="btn btn-secondary btn-sm">Ver todos</a>
+      <a href="{% url 'funcionarios_list' %}" class="btn btn-secondary btn-sm">Ver todos</a>
     </div>
     <div class="table-wrap">
       <table>
@@ -148,7 +148,9 @@
         <span class="card-title">Acesso Rápido</span>
       </div>
       <div class="card-body" style="display:flex; flex-direction:column; gap:8px;">
-        <a href="#" class="btn btn-secondary" style="justify-content:flex-start;">🕐 Registros de Ponto</a>
+        <a href="{% url 'funcionarios_list' %}" class="btn btn-secondary" style="justify-content:flex-start;">👥 Funcionários</a>
+        {% url 'ponto_registros' as ponto_registros_url %}
+        <a href="{{ ponto_registros_url|default:'/ponto/' }}" class="btn btn-secondary" style="justify-content:flex-start;">🕐 Registros de Ponto</a>
         <a href="#" class="btn btn-secondary" style="justify-content:flex-start;">🏢 Departamentos</a>
         <a href="#" class="btn btn-secondary" style="justify-content:flex-start;">🎯 Cargos</a>
         {% if user.profile.is_gerente %}

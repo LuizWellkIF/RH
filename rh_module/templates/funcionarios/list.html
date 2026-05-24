@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Funcionários — RH Sistema{% endblock %}
+{% block topbar_title %}Funcionários{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Funcionários</h1>
+    <p>Cadastro e consulta de colaboradores</p>
+  </div>
+  <a href="{% url 'funcionario_create' %}" class="btn btn-primary">+ Novo Funcionário</a>
+</div>
+
+<div class="card" style="margin-bottom:16px;">
+  <div class="card-header">
+    <span class="card-title">Filtros</span>
+  </div>
+  <div class="card-body">
+    <form method="get" style="display:grid; grid-template-columns: 1.4fr 0.8fr 1fr 1fr auto; gap: 12px; align-items: end;">
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Busca</label>
+        <input name="q" value="{{ q }}" class="form-control" placeholder="Nome, CPF ou e-mail" />
+      </div>
+
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Status</label>
+        <select name="status" class="form-control">
+          <option value="">Todos</option>
+          <option value="ativo" {% if status == 'ativo' %}selected{% endif %}>Ativo</option>
+          <option value="afastado" {% if status == 'afastado' %}selected{% endif %}>Afastado</option>
+          <option value="inativo" {% if status == 'inativo' %}selected{% endif %}>Inativo</option>
+        </select>
+      </div>
+
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Departamento</label>
+        <select name="departamento" class="form-control">
+          <option value="">Todos</option>
+          {% for dep in departamentos %}
+            <option value="{{ dep.id_departamento }}" {% if departamento_id|add:'' == dep.id_departamento|add:'' %}selected{% endif %}>
+              {{ dep.nome }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="margin:0;">
+        <label class="form-label">Cargo</label>
+        <select name="cargo" class="form-control">
+          <option value="">Todos</option>
+          {% for c in cargos %}
+            <option value="{{ c.id_cargo }}" {% if cargo_id|add:'' == c.id_cargo|add:'' %}selected{% endif %}>
+              {{ c.nome }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div style="display:flex; gap:8px;">
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+        <a href="{% url 'funcionarios_list' %}" class="btn btn-secondary">Limpar</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Lista</span>
+    <span class="text-sm text-muted">{{ funcionarios|length }} resultado(s)</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Nome</th>
+          <th>CPF</th>
+          <th>Departamento</th>
+          <th>Cargo</th>
+          <th>Status</th>
+          <th style="width:180px">Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for func in funcionarios %}
+        <tr>
+          <td>
+            <div style="font-weight:500">{{ func.nome }}</div>
+            <div class="text-sm text-muted">{{ func.email }}</div>
+          </td>
+          <td>{{ func.cpf }}</td>
+          <td>{{ func.id_departamento.nome }}</td>
+          <td>{{ func.id_cargo.nome }}</td>
+          <td>
+            {% if func.status == 'ativo' %}
+              <span class="badge badge-success">Ativo</span>
+            {% elif func.status == 'inativo' %}
+              <span class="badge badge-danger">Inativo</span>
+            {% else %}
+              <span class="badge badge-warn">Afastado</span>
+            {% endif %}
+          </td>
+          <td>
+            <div style="display:flex; gap:8px;">
+              <a class="btn btn-secondary btn-sm" href="{% url 'funcionario_edit' func.id_funcionario %}">Editar</a>
+              <a class="btn btn-danger btn-sm" href="{% url 'funcionario_delete' func.id_funcionario %}">Excluir</a>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center; color:var(--text-3); padding:32px 16px;">
+            Nenhum funcionário encontrado.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

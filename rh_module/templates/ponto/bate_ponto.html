@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Bate Ponto — RH Sistema{% endblock %}
+{% block topbar_title %}Bate Ponto{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Registro de Ponto</h1>
+    <p>Horário do servidor, marcações do dia e total de horas.</p>
+  </div>
+  <a href="{% url 'ponto_consultas' %}" class="btn btn-secondary">📄 Consultas (API)</a>
+</div>
+
+<div class="card" style="margin-bottom: 16px;">
+  <div class="card-body" style="text-align:center;">
+    <div class="ponto-clock" id="serverClock">{{ server_now|date:"H:i:s" }}</div>
+    <div class="text-sm text-muted">Horário do servidor</div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 16px;">
+  <div class="card-header">
+    <span class="card-title">Funcionário</span>
+  </div>
+  <div class="card-body">
+    <form method="get" style="display:flex; gap: 12px; align-items: end; flex-wrap: wrap;">
+      <div class="form-group" style="margin:0; min-width: 280px; flex: 1;">
+        <label class="form-label" for="funcionario">Selecione o funcionário</label>
+        <select id="funcionario" name="funcionario" class="form-control" required>
+          <option value="">Selecione…</option>
+          {% for f in funcionarios %}
+            <option value="{{ f.id_funcionario }}" {% if funcionario_id|default:'' == f.id_funcionario|stringformat:'s' %}selected{% endif %}>
+              {{ f.nome }} — {{ f.id_departamento.sigla }} / {{ f.id_cargo.nome }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn btn-secondary">Carregar</button>
+    </form>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 16px;">
+  <div class="card-header">
+    <span class="card-title">Marcações de hoje</span>
+    <span class="badge badge-neutral">{{ total_punches }}/4</span>
+  </div>
+  <div class="card-body">
+    <div class="ponto-slots">
+      {% for s in slots %}
+      <div class="ponto-slot">
+        <div class="ponto-slot-label">{{ s.label }}</div>
+        <div class="ponto-slot-time">{% if s.dt %}{{ s.dt|date:"H:i" }}{% else %}--:--{% endif %}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="ponto-total">
+      <div class="stat-label">Total trabalhado (sem intervalo)</div>
+      <div class="stat-value" id="totalWorked">{{ total_trabalhado }}</div>
+      <div class="text-sm text-muted">Atualiza automaticamente enquanto houver jornada em andamento.</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Registrar</span>
+    <span class="badge badge-info">Próximo: {{ next_label|default:"—" }}</span>
+  </div>
+  <div class="card-body">
+
+    {% if form_errors %}
+      <div class="msg error" style="margin-bottom: 14px;">Não foi possível registrar. Verifique as regras de sequência.</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="id_funcionario" value="{{ funcionario_id|default:'' }}" />
+
+      <div class="form-group">
+        <label class="form-label" for="observacao">Observação (opcional)</label>
+        <textarea id="observacao" name="observacao" class="form-control" rows="3" placeholder="Ex.: Ajuste manual / Esquecimento de marcação">{{ form_values.observacao|default:'' }}</textarea>
+        {% if form_errors.non_field_errors %}
+          <ul class="form-errors">
+            {% for e in form_errors.non_field_errors %}<li>{{ e }}</li>{% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+
+      <button type="submit" class="btn btn-primary" {% if not can_register %}disabled{% endif %}>
+        Registrar {{ next_label|default:"" }}
+      </button>
+
+      {% if not funcionario_id %}
+        <div class="text-sm text-muted" style="margin-top: 10px;">Selecione um funcionário para habilitar o registro.</div>
+      {% elif total_punches >= 4 %}
+        <div class="text-sm text-muted" style="margin-top: 10px;">As 4 marcações do dia já foram registradas.</div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+{{ clock_payload|json_script:"pontoClockPayload" }}
+<script>
+(function () {
+  const el = document.getElementById('pontoClockPayload');
+  if (!el) return;
+
+  const data = JSON.parse(el.textContent);
+
+  const clockEl = document.getElementById('serverClock');
+  const totalEl = document.getElementById('totalWorked');
+
+  const tzOffsetMin = Number(data.server_tz_offset_min || 0);
+
+  let serverEpoch = Number(data.server_epoch_ms || 0);
+  const entrada1 = data.entrada1_epoch_ms ? Number(data.entrada1_epoch_ms) : null;
+  const saida1 = data.saida1_epoch_ms ? Number(data.saida1_epoch_ms) : null;
+  const entrada2 = data.entrada2_epoch_ms ? Number(data.entrada2_epoch_ms) : null;
+  const saida2 = data.saida2_epoch_ms ? Number(data.saida2_epoch_ms) : null;
+
+  function pad2(n) {
+    return String(n).padStart(2, '0');
+  }
+
+  function formatHMS(totalSeconds) {
+    const t = Math.max(0, Math.floor(totalSeconds || 0));
+    const h = Math.floor(t / 3600);
+    const m = Math.floor((t % 3600) / 60);
+    const s = t % 60;
+    return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+  }
+
+  function clockString(epochMs) {
+    const wallEpoch = epochMs + (tzOffsetMin * 60 * 1000);
+    const d = new Date(wallEpoch);
+    const h = d.getUTCHours();
+    const m = d.getUTCMinutes();
+    const s = d.getUTCSeconds();
+    return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
+  }
+
+  function secondsBetween(startMs, endMs) {
+    if (!startMs || !endMs || endMs <= startMs) return 0;
+    return Math.floor((endMs - startMs) / 1000);
+  }
+
+  function workedSeconds(nowMs) {
+    let total = 0;
+
+    if (entrada1) {
+      const end1 = saida1 || nowMs;
+      total += secondsBetween(entrada1, end1);
+    }
+
+    if (entrada2) {
+      const end2 = saida2 || nowMs;
+      total += secondsBetween(entrada2, end2);
+    }
+
+    return total;
+  }
+
+  function tick() {
+    if (clockEl && serverEpoch) {
+      clockEl.textContent = clockString(serverEpoch);
+    }
+    if (totalEl && serverEpoch) {
+      totalEl.textContent = formatHMS(workedSeconds(serverEpoch));
+    }
+  }
+
+  tick();
+  setInterval(function () {
+    serverEpoch = serverEpoch + 1000;
+    tick();
+  }, 1000);
+})();
+</script>
+{% endblock %}

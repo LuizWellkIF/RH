@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if mode == 'edit' %}Editar Funcionário{% else %}Novo Funcionário{% endif %} — RH Sistema{% endblock %}
+{% block topbar_title %}{% if mode == 'edit' %}Editar Funcionário{% else %}Novo Funcionário{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if mode == 'edit' %}Editar Funcionário{% else %}Novo Funcionário{% endif %}</h1>
+    <p>Preencha os dados do colaborador</p>
+  </div>
+  <a href="{% url 'funcionarios_list' %}" class="btn btn-secondary">Voltar</a>
+</div>
+
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">Dados</span>
+  </div>
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+
+      {% if form.non_field_errors %}
+        <div class="msg error" style="margin-bottom:16px;">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <div style="display:grid; grid-template-columns: 1.4fr 0.6fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          {{ form.nome }}
+          {% if form.nome.errors %}<div class="form-error">{{ form.nome.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Status</label>
+          {{ form.status }}
+          {% if form.status.errors %}<div class="form-error">{{ form.status.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label">CPF</label>
+          {{ form.cpf }}
+          {% if form.cpf.errors %}<div class="form-error">{{ form.cpf.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">E-mail</label>
+          {{ form.email }}
+          {% if form.email.errors %}<div class="form-error">{{ form.email.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label">Telefone</label>
+          {{ form.telefone }}
+          {% if form.telefone.errors %}<div class="form-error">{{ form.telefone.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Data de admissão</label>
+          {{ form.data_admissao }}
+          {% if form.data_admissao.errors %}<div class="form-error">{{ form.data_admissao.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div class="form-group">
+          <label class="form-label">Departamento</label>
+          {{ form.id_departamento }}
+          {% if form.id_departamento.errors %}<div class="form-error">{{ form.id_departamento.errors|striptags }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cargo</label>
+          {{ form.id_cargo }}
+          {% if form.id_cargo.errors %}<div class="form-error">{{ form.id_cargo.errors|striptags }}</div>{% endif %}
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Salário</label>
+        {{ form.salario }}
+        {% if form.salario.errors %}<div class="form-error">{{ form.salario.errors|striptags }}</div>{% endif %}
+      </div>
+
+      <div style="display:flex; gap:10px; margin-top: 10px;">
+        <button type="submit" class="btn btn-primary">Salvar</button>
+        <a href="{% url 'funcionarios_list' %}" class="btn btn-secondary">Cancelar</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

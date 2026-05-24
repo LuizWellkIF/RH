@@ -28,6 +28,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', lambda request: redirect('dashboard'), name='home'),
     path('', include('autenticacao.urls')),
+    path('funcionarios/', include('funcionarios.web_urls')),
+    path('ponto/', include('ponto.web_urls')),
     path('api/v1/departamentos/', include('departamentos.urls')),
     path('api/v1/cargo/', include('cargo.urls')),
     path('api/v1/funcionarios/', include('funcionarios.urls')),
