@@ -10,3 +10,29 @@ python rh_module\manage.py runserver
 
 Sem ativar o ambiente:
 .\venv\Scripts\python.exe rh_module\manage.py runserver
+
+
+-Uso das Branch-
+
+- Criar nova Branch
+git checkout -b nome-da-branch
+
+- Trocar/entrar numa Branch
+git switch -c nome-da-branch
+
+- Subir alterações na Branch
+git add .
+
+- Commitar na Branch
+git commit -m "mensagem"
+
+- Enviar ao GitHub
+git push origin nome-da-branch
+
+- Acesse a Main e atualize
+git checkout main
+
+git pull origin main
+
+- Aplica o merge
+git merge feature/login

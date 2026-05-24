@@ -13,8 +13,10 @@
 {% if user.is_authenticated %}
 <aside class="sidebar">
   <div class="sidebar-brand">
-    <div class="brand-label">Módulo</div>
+    <a href="{% url 'home' %}">
+      <div class="brand-label">Módulo</div>
     <div class="brand-name">RH <span>Sistema</span></div>
+    </a>
   </div>
 
   <div class="sidebar-user">
