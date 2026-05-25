@@ -8,10 +8,9 @@ from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.crypto import get_random_string
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import filters, viewsets
+from rest_framework import filters, request, viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
-
 from cargo.models import Cargo
 from departamentos.models import Departamento
 from autenticacao.models import UserProfile
@@ -21,6 +20,8 @@ from .forms import FuncionarioForm
 
 
 def _criar_usuario_para_funcionario(funcionario: Funcionario) -> User:
+    if UserProfile.objects.filter(funcionario=funcionario).exists():
+        return UserProfile.objects.get(funcionario=funcionario).user
     """Cria um usuário Django para um funcionário com base no email."""
     email = funcionario.email
     username = email.split('@')[0]
@@ -46,7 +47,6 @@ def _criar_usuario_para_funcionario(funcionario: Funcionario) -> User:
     UserProfile.objects.create(
         user=user,
         funcionario=funcionario,
-        cargo_rh='analista',
         primeiro_acesso=True
     )
 
@@ -190,17 +190,14 @@ def funcionario_delete_view(request, pk: int):
 
     if request.method == 'POST':
         try:
-            # Deleta o usuário associado também
-            if hasattr(funcionario, 'user_profile') and funcionario.user_profile:
-                funcionario.user_profile.user.delete()
-
-            funcionario.delete()
-            messages.success(request, f'Funcionário "{funcionario.nome}" removido com sucesso!')
+            nome_funcionario = funcionario.nome  # Salva antes de deletar
+            funcionario.delete()  # Deleta func + cascata deleta user + profile
+            messages.success(request, f'Funcionário "{nome_funcionario}" removido com sucesso!')
             return redirect('funcionarios_list')
         except ProtectedError:
             messages.error(request, 'Não foi possível excluir: há registros vinculados a este funcionário.')
             return redirect('funcionarios_list')
 
     return render(request, 'funcionarios/confirm_delete.html', {
-        'funcionario': funcionario,
+    'funcionario': funcionario,
     })

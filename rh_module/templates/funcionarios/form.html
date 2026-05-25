@@ -13,34 +13,29 @@
 </div>
 
 {% if usuario_criado and senha_gerada %}
-<div style="max-width: 800px; margin-bottom:20px;">
-  <div style="background:var(--bg-success); border:2px solid var(--text-success); padding:16px; border-radius:8px;">
-    <p style="margin:0 0 12px 0; font-weight:600; color:var(--text-success); font-size:16px;">
-      Funcionário e Usuário Criados com Sucesso!
-    </p>
-    <p style="margin:0 0 16px 0; color:var(--text-success);">
+<div class="card" style="margin-bottom:20px; border-left:4px solid var(--text-success);">
+  <div class="card-body">
+    <p style="margin:0 0 16px 0; color:var(--text-2);">
       Um usuário de acesso foi gerado automaticamente. Compartilhe os dados abaixo com segurança:
     </p>
-    <div style="background:var(--bg-3); padding:12px; border-radius:6px; margin-bottom:12px; border-left:4px solid var(--text-success);">
-      <div style="display:grid; grid-template-columns: auto 1fr; gap:16px; align-items:center;">
-        <div>
-          <span style="display:block; font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; margin-bottom:4px;">Username</span>
-          <code style="background:var(--bg-4); padding:8px 12px; border-radius:4px; font-family:monospace; font-weight:600; display:inline-block;">
-            {{ usuario_criado.username }}
-          </code>
-        </div>
-        <div>
-          <span style="display:block; font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; margin-bottom:4px;">Senha Temporária</span>
-          <code style="background:var(--bg-4); padding:8px 12px; border-radius:4px; font-family:monospace; font-weight:600; display:inline-block;">
-            {{ senha_gerada }}
-          </code>
-        </div>
-        <div>
-          <span style="display:block; font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; margin-bottom:4px;">Email</span>
-          <code style="background:var(--bg-4); padding:8px 12px; border-radius:4px; font-family:monospace; display:inline-block;">
-            {{ usuario_criado.email }}
-          </code>
-        </div>
+    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:16px; margin-bottom:16px;">
+      <div style="background:var(--bg-3); padding:12px; border-radius:6px;">
+        <span style="display:block; font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; margin-bottom:8px;">Username</span>
+        <code style="background:var(--bg-4); padding:8px 12px; border-radius:4px; font-family:monospace; font-weight:600; display:inline-block; font-size:13px;">
+          {{ usuario_criado.username }}
+        </code>
+      </div>
+      <div style="background:var(--bg-3); padding:12px; border-radius:6px;">
+        <span style="display:block; font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; margin-bottom:8px;">Senha Temporária</span>
+        <code style="background:var(--bg-4); padding:8px 12px; border-radius:4px; font-family:monospace; font-weight:600; display:inline-block; font-size:13px;">
+          {{ senha_gerada }}
+        </code>
+      </div>
+      <div style="background:var(--bg-3); padding:12px; border-radius:6px;">
+        <span style="display:block; font-size:11px; font-weight:600; color:var(--text-3); text-transform:uppercase; margin-bottom:8px;">Email</span>
+        <code style="background:var(--bg-4); padding:8px 12px; border-radius:4px; font-family:monospace; font-size:13px; display:inline-block;">
+          {{ usuario_criado.email }}
+        </code>
       </div>
     </div>
     <p style="margin:0; font-size:12px; color:var(--text-3);">
