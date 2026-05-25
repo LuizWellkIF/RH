@@ -13,29 +13,27 @@
 </div>
 
 <div style="max-width: 560px;">
-  <div class="card" style="border-color:var(--border-danger);">
-    <div class="card-body" style="padding:24px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" style="color:var(--text-danger);">Aviso</span>
+    </div>
+    <div class="card-body">
+      <p style="margin-bottom:16px;">
+        Esta ação <strong>não pode ser desfeita</strong>. Por favor, confirme que deseja excluir a solicitação:
+      </p>
 
-      <div style="background:var(--bg-danger); color:var(--text-danger); padding:12px; border-radius:6px; margin-bottom:16px;">
-        ⚠️ Atenção! Você está prestes a excluir uma solicitação de férias.
+      <div style="background:var(--bg-2); padding:12px; border-radius:6px; margin-bottom:16px;">
+        <strong>#{{ object.id_solicitacao }}</strong><br>
+        <span style="color:var(--text-3); font-size:12px;">
+          {{ object.id_funcionario.nome }} • {{ object.data_inicio|date:"d/m/Y" }} a {{ object.data_fim|date:"d/m/Y" }} • {{ object.get_status_display }}
+        </span>
       </div>
 
-      <p style="margin:16px 0;">Tem certeza de que deseja excluir esta solicitação?</p>
-
-      <ul style="margin:16px 0; padding-left:20px;">
-        <li>ID: <strong>#{{ object.id_solicitacao }}</strong></li>
-        <li>Período: <strong>{{ object.data_inicio|date:"d/m/Y" }} a {{ object.data_fim|date:"d/m/Y" }}</strong></li>
-        <li>Status: <strong>{{ object.get_status_display }}</strong></li>
-      </ul>
-
-      <form method="post" style="margin-top:24px;">
+      <form method="post" style="display:flex; gap:10px;">
         {% csrf_token %}
-        <div style="display:flex; gap:10px;">
-          <button type="submit" class="btn btn-danger">Excluir Solicitação</button>
-          <a href="{% url 'ferias_detail' object.pk %}" class="btn btn-secondary">Cancelar</a>
-        </div>
+        <button type="submit" class="btn btn-danger">Sim, excluir</button>
+        <a href="{% url 'ferias_detail' object.pk %}" class="btn btn-secondary">Cancelar</a>
       </form>
-
     </div>
   </div>
 </div>

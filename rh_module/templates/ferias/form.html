@@ -18,15 +18,38 @@
       <span class="card-title">Dados da Solicitação</span>
     </div>
     <div class="card-body">
+      <div style="background:var(--bg-2); padding:12px; border-radius:8px; margin-bottom:16px; border-left:4px solid var(--accent-md);">
+        <div style="font-weight:500;">Regras</div>
+        <div class="text-sm text-muted">Mínimo de 5 dias corridos • A data de fim deve ser posterior à data de início • Sem sobreposição com férias <strong>aprovadas</strong> • O status inicia como <strong>pendente</strong>.</div>
+      </div>
+
       <form method="post">
         {% csrf_token %}
+
+        {% if funcionarios %}
+        <div class="form-group">
+          <label class="form-label">Funcionário</label>
+          <select name="id_funcionario" class="form-control" required {% if object %}disabled{% endif %}>
+            <option value="">Selecione…</option>
+            {% for f in funcionarios %}
+              <option value="{{ f.id_funcionario }}"
+                {% if object and object.id_funcionario_id == f.id_funcionario %}selected{% elif request.POST.id_funcionario|stringformat:"s" == f.id_funcionario|stringformat:"s" %}selected{% endif %}>
+                {{ f.nome }}
+              </option>
+            {% endfor %}
+          </select>
+          {% if object %}
+            <input type="hidden" name="id_funcionario" value="{{ object.id_funcionario_id }}" />
+          {% endif %}
+        </div>
+        {% endif %}
 
         <div class="form-group">
           <label class="form-label">Data de Início</label>
           <input
             type="date"
             name="data_inicio"
-            value="{% if object %}{{ object.data_inicio|date:'Y-m-d' }}{% endif %}"
+            value="{% if object %}{{ object.data_inicio|date:'Y-m-d' }}{% else %}{{ request.POST.data_inicio }}{% endif %}"
             class="form-control"
             required
           />
@@ -37,7 +60,7 @@
           <input
             type="date"
             name="data_fim"
-            value="{% if object %}{{ object.data_fim|date:'Y-m-d' }}{% endif %}"
+            value="{% if object %}{{ object.data_fim|date:'Y-m-d' }}{% else %}{{ request.POST.data_fim }}{% endif %}"
             class="form-control"
             required
           />
@@ -50,14 +73,8 @@
             class="form-control"
             rows="4"
             placeholder="Ex: Viagem marcada, reuniões importantes..."
-          >{% if object %}{{ object.observacao }}{% endif %}</textarea>
+          >{% if object %}{{ object.observacao }}{% else %}{{ request.POST.observacao }}{% endif %}</textarea>
         </div>
-
-        {% if messages %}
-        <div class="msg error" style="margin-bottom:16px;">
-          {% for message in messages %}{{ message }}{% endfor %}
-        </div>
-        {% endif %}
 
         <div style="display:flex; gap:10px; margin-top:8px;">
           <button type="submit" class="btn btn-primary">
@@ -69,4 +86,33 @@
     </div>
   </div>
 </div>
+
+<script>
+(function () {
+  const startEl = document.querySelector('input[name="data_inicio"]');
+  const endEl = document.querySelector('input[name="data_fim"]');
+  if (!startEl || !endEl) return;
+
+  function addDays(iso, days) {
+    if (!iso) return null;
+    const parts = String(iso).split('-').map((p) => parseInt(p, 10));
+    if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+    const [y, m, d] = parts;
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    dt.setUTCDate(dt.getUTCDate() + days);
+    const yyyy = dt.getUTCFullYear();
+    const mm = String(dt.getUTCMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getUTCDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  }
+
+  function updateMinEndDate() {
+    const minEnd = addDays(startEl.value, 4); // mínimo 5 dias corridos
+    endEl.min = minEnd || '';
+  }
+
+  startEl.addEventListener('change', updateMinEndDate);
+  updateMinEndDate();
+})();
+</script>
 {% endblock %}

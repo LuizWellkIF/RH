@@ -7,7 +7,7 @@
 <div class="page-header">
   <div>
     <h1>Solicitações de Férias</h1>
-    <p>Gerencie suas férias e solicitar períodos</p>
+    <p>Crie, acompanhe e gerencie solicitações de férias.</p>
   </div>
   <a href="{% url 'ferias_create' %}" class="btn btn-primary">+ Nova Solicitação</a>
 </div>
@@ -20,10 +20,22 @@
         type="text"
         name="search"
         value="{{ request.GET.search }}"
-        placeholder="Buscar por funcionário..."
+        placeholder="Buscar por funcionário (nome ou e-mail)..."
         class="form-control"
         style="max-width: 300px;"
       />
+
+      {% if is_gerente %}
+      <select name="id_funcionario" class="form-control" style="max-width: 320px;">
+        <option value="">Todos os funcionários</option>
+        {% for f in funcionarios %}
+          <option value="{{ f.id_funcionario }}" {% if funcionario_id_filter|stringformat:"s" == f.id_funcionario|stringformat:"s" %}selected{% endif %}>
+            {{ f.nome }}
+          </option>
+        {% endfor %}
+      </select>
+      {% endif %}
+
       <select name="status" class="form-control" style="max-width: 180px;">
         <option value="">Todos os status</option>
         <option value="pendente" {% if status_filter == 'pendente' %}selected{% endif %}>Pendente</option>
@@ -31,7 +43,7 @@
         <option value="recusada" {% if status_filter == 'recusada' %}selected{% endif %}>Recusada</option>
       </select>
       <button type="submit" class="btn btn-secondary">Filtrar</button>
-      {% if request.GET.search or status_filter %}
+      {% if request.GET.search or status_filter or funcionario_id_filter %}
       <a href="{% url 'ferias_list' %}" class="btn btn-secondary">Limpar</a>
       {% endif %}
     </form>
@@ -41,7 +53,9 @@
 <!-- Tabela -->
 <div class="card">
   <div class="card-header">
-    <span class="card-title">{{ solicitacoes.count }} solicitação{{ solicitacoes.count|pluralize }}</span>
+    {% with solicitacoes.count as total %}
+      <span class="card-title">{{ total }} {% if total == 1 %}solicitação{% else %}solicitações{% endif %}</span>
+    {% endwith %}
   </div>
   <div class="table-wrap">
     <table>
@@ -76,10 +90,17 @@
           </td>
           <td class="text-sm text-muted">{{ sol.data_solicitacao|date:"d/m/Y H:i" }}</td>
           <td>
-            <div style="display:flex; gap:6px;">
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
               <a href="{% url 'ferias_detail' sol.pk %}" class="btn btn-secondary btn-sm">Ver</a>
-              {% if sol.status == 'pendente' and user.profile.funcionario == sol.id_funcionario %}
+
+              {% if sol.status == 'pendente' and user_funcionario and user_funcionario == sol.id_funcionario %}
               <a href="{% url 'ferias_edit' sol.pk %}" class="btn btn-secondary btn-sm">Editar</a>
+              <a href="{% url 'ferias_delete' sol.pk %}" class="btn btn-danger btn-sm">Excluir</a>
+              {% endif %}
+
+              {% if is_gerente and sol.status == 'pendente' %}
+              <a href="{% url 'ferias_aprovar' sol.pk %}" class="btn btn-success btn-sm">Aprovar</a>
+              <a href="{% url 'ferias_recusar' sol.pk %}" class="btn btn-danger btn-sm">Recusar</a>
               {% endif %}
             </div>
           </td>
