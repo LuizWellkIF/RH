@@ -1,3 +1,4 @@
+from django.utils import timezone
 from rest_framework import serializers
 from .models import Funcionario
 
@@ -41,10 +42,12 @@ class FuncionarioSerializer(serializers.ModelSerializer):
         return validar_cpf(value)
 
     def get_tempo_empresa(self, obj):
-        from django.utils import timezone
-        delta = timezone.now() - obj.data_admissao if obj.data_admissao else None
-        if not delta:
+        if not obj.data_admissao:
             return None
+        admissao = obj.data_admissao
+        if timezone.is_naive(admissao):
+            admissao = timezone.make_aware(admissao, timezone.get_default_timezone())
+        delta = timezone.now() - admissao
         anos = delta.days // 365
         meses = (delta.days % 365) // 30
         if anos > 0:
