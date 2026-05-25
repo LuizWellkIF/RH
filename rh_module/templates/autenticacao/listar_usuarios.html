@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+
+{% block title %}Usuários do Sistema — RH Sistema{% endblock %}
+{% block topbar_title %}Gestão de Usuários{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Usuários do Sistema</h1>
+    <p>Gerenciar acessos dos funcionários cadastrados no RH.</p>
+  </div>
+  <a href="{% url 'criar_usuario' %}" class="btn btn-primary">+ Novo Usuário</a>
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    {% if usuarios %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Usuário</th>
+            <th>Email</th>
+            <th>Funcionário</th>
+            <th>Cargo RH</th>
+            <th>Status</th>
+            <th>Primeiro Acesso</th>
+            <th style="width:120px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for perfil in usuarios %}
+          <tr>
+            <td style="font-weight:500;">{{ perfil.user.username }}</td>
+            <td>{{ perfil.user.email }}</td>
+            <td>
+              {% if perfil.funcionario %}
+                <a href="{% url 'funcionarios_list' %}?q={{ perfil.funcionario.nome }}" style="color:var(--text-link);">
+                  {{ perfil.funcionario.nome }}
+                </a>
+              {% else %}
+                <span style="color:var(--text-3);">—</span>
+              {% endif %}
+            </td>
+            <td>
+              <span class="badge {% if perfil.is_gerente %}badge-warning{% else %}badge-info{% endif %}">
+                {{ perfil.get_cargo_rh_display }}
+              </span>
+            </td>
+            <td>
+              {% if perfil.user.is_active %}
+                <span class="badge badge-success">Ativo</span>
+              {% else %}
+                <span class="badge badge-danger">Inativo</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if perfil.primeiro_acesso %}
+                <span class="badge badge-warn">Pendente</span>
+              {% else %}
+                <span class="badge badge-success">Realizado</span>
+              {% endif %}
+            </td>
+            <td>
+              <div style="display:flex; gap:6px; justify-content:flex-end;">
+                <a href="{% url 'editar_usuario' perfil.pk %}" class="btn btn-sm btn-secondary" title="Editar">✎</a>
+                {% if perfil.user != request.user %}
+                <a href="{% url 'desativar_usuario' perfil.pk %}" class="btn btn-sm btn-secondary" title="Desativar">🚫</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:64px 16px; color:var(--text-3);">
+      <p style="margin:0;">Nenhum usuário cadastrado.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

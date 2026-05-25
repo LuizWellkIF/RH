@@ -142,23 +142,6 @@
       </div>
     </div>
 
-    <!-- Acesso rápido -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Acesso Rápido</span>
-      </div>
-      <div class="card-body" style="display:flex; flex-direction:column; gap:8px;">
-        <a href="{% url 'funcionarios_list' %}" class="btn btn-secondary" style="justify-content:flex-start;">👥 Funcionários</a>
-        {% url 'ponto_registros' as ponto_registros_url %}
-        <a href="{{ ponto_registros_url|default:'/ponto/' }}" class="btn btn-secondary" style="justify-content:flex-start;">🕐 Registros de Ponto</a>
-        <a href="#" class="btn btn-secondary" style="justify-content:flex-start;">🏢 Departamentos</a>
-        <a href="#" class="btn btn-secondary" style="justify-content:flex-start;">🎯 Cargos</a>
-        {% if user.profile.is_gerente %}
-        <a href="{% url 'criar_usuario' %}" class="btn btn-secondary" style="justify-content:flex-start;">🔑 Novo Usuário do Sistema</a>
-        {% endif %}
-      </div>
-    </div>
-
   </div>
 </div>
 {% endblock %}

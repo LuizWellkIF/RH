@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+
+{% block title %}Férias — RH Sistema{% endblock %}
+{% block topbar_title %}Férias{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Solicitações de Férias</h1>
+    <p>Gerencie suas férias e solicitar períodos</p>
+  </div>
+  <a href="{% url 'ferias_create' %}" class="btn btn-primary">+ Nova Solicitação</a>
+</div>
+
+<!-- Filtros -->
+<div class="card" style="margin-bottom: 20px;">
+  <div class="card-body" style="padding: 16px 24px;">
+    <form method="get" style="display:flex; gap:12px; align-items:center;">
+      <input
+        type="text"
+        name="search"
+        value="{{ request.GET.search }}"
+        placeholder="Buscar por funcionário..."
+        class="form-control"
+        style="max-width: 300px;"
+      />
+      <select name="status" class="form-control" style="max-width: 180px;">
+        <option value="">Todos os status</option>
+        <option value="pendente" {% if status_filter == 'pendente' %}selected{% endif %}>Pendente</option>
+        <option value="aprovada" {% if status_filter == 'aprovada' %}selected{% endif %}>Aprovada</option>
+        <option value="recusada" {% if status_filter == 'recusada' %}selected{% endif %}>Recusada</option>
+      </select>
+      <button type="submit" class="btn btn-secondary">Filtrar</button>
+      {% if request.GET.search or status_filter %}
+      <a href="{% url 'ferias_list' %}" class="btn btn-secondary">Limpar</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Tabela -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">{{ solicitacoes.count }} solicitação{{ solicitacoes.count|pluralize }}</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Funcionário</th>
+          <th>Período</th>
+          <th>Dias</th>
+          <th>Status</th>
+          <th>Data de Solicitação</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sol in solicitacoes %}
+        <tr>
+          <td class="text-muted font-mono">{{ sol.id_solicitacao }}</td>
+          <td style="font-weight:500">{{ sol.id_funcionario.nome }}</td>
+          <td class="text-sm text-muted">
+            {{ sol.data_inicio|date:"d/m/Y" }} a {{ sol.data_fim|date:"d/m/Y" }}
+          </td>
+          <td class="text-center">{{ sol.dias_solicitados }}</td>
+          <td>
+            {% if sol.status == 'pendente' %}
+              <span class="badge badge-warn">Pendente</span>
+            {% elif sol.status == 'aprovada' %}
+              <span class="badge badge-success">Aprovada</span>
+            {% else %}
+              <span class="badge badge-danger">Recusada</span>
+            {% endif %}
+          </td>
+          <td class="text-sm text-muted">{{ sol.data_solicitacao|date:"d/m/Y H:i" }}</td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <a href="{% url 'ferias_detail' sol.pk %}" class="btn btn-secondary btn-sm">Ver</a>
+              {% if sol.status == 'pendente' and user.profile.funcionario == sol.id_funcionario %}
+              <a href="{% url 'ferias_edit' sol.pk %}" class="btn btn-secondary btn-sm">Editar</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" style="text-align:center; color:var(--text-3); padding:40px 16px;">
+            Nenhuma solicitação de férias encontrada.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

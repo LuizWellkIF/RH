@@ -67,6 +67,7 @@ body {
 .sidebar-user .user-role {
   font-size: 11px; color: rgba(255,255,255,.45); margin-top: 1px;
 }
+
 .badge-role {
   display: inline-block; margin-top: 5px;
   font-size: 10px; font-weight: 500;

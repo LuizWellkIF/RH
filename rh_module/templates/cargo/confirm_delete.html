@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Deletar Cargo — RH Sistema{% endblock %}
+{% block topbar_title %}Deletar Cargo{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Deletar Cargo</h1>
+    <p>Tem certeza que deseja deletar o cargo <strong>{{ object.nome }}</strong>?</p>
+  </div>
+  <a href="{% url 'cargo_list' %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div style="max-width: 560px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" style="color:var(--text-danger);">Aviso</span>
+    </div>
+    <div class="card-body">
+      <p style="margin-bottom:16px;">
+        Esta ação <strong>não pode ser desfeita</strong>. Por favor, confirme que deseja deletar o cargo:
+      </p>
+      <div style="background:var(--bg-2); padding:12px; border-radius:6px; margin-bottom:16px;">
+        <strong>{{ object.nome }}</strong><br>
+        <span style="color:var(--text-3); font-size:12px;">{{ object.get_nivel_display }} • {{ object.id_departamento.nome }}</span>
+      </div>
+      <p style="color:var(--text-3); font-size:12px; margin-bottom:24px;">
+        Funcionários vinculados a este cargo: <strong>{{ object.funcionarios.count }}</strong>
+      </p>
+      <form method="post" style="display:flex; gap:10px;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Sim, deletar</button>
+        <a href="{% url 'cargo_list' %}" class="btn btn-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

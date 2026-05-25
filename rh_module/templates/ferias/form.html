@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Nova{% endif %} Solicitação de Férias — RH Sistema{% endblock %}
+{% block topbar_title %}{% if object %}Editar Solicitação{% else %}Nova Solicitação de Férias{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if object %}Editar Solicitação de Férias{% else %}Nova Solicitação de Férias{% endif %}</h1>
+    <p>{% if object %}Atualize sua solicitação de férias.{% else %}Solicite um período de férias.{% endif %}</p>
+  </div>
+  <a href="{% url 'ferias_list' %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div style="max-width: 560px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Dados da Solicitação</span>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">Data de Início</label>
+          <input
+            type="date"
+            name="data_inicio"
+            value="{% if object %}{{ object.data_inicio|date:'Y-m-d' }}{% endif %}"
+            class="form-control"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Data de Fim</label>
+          <input
+            type="date"
+            name="data_fim"
+            value="{% if object %}{{ object.data_fim|date:'Y-m-d' }}{% endif %}"
+            class="form-control"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Observações (Opcional)</label>
+          <textarea
+            name="observacao"
+            class="form-control"
+            rows="4"
+            placeholder="Ex: Viagem marcada, reuniões importantes..."
+          >{% if object %}{{ object.observacao }}{% endif %}</textarea>
+        </div>
+
+        {% if messages %}
+        <div class="msg error" style="margin-bottom:16px;">
+          {% for message in messages %}{{ message }}{% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <button type="submit" class="btn btn-primary">
+            {% if object %}Salvar Alterações{% else %}Solicitar Férias{% endif %}
+          </button>
+          <a href="{% url 'ferias_list' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ object.nome }} — RH Sistema{% endblock %}
+{% block topbar_title %}Cargo — {{ object.nome }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ object.nome }}</h1>
+    <p>{{ object.get_nivel_display }} em <strong>{{ object.id_departamento.sigla }}</strong></p>
+  </div>
+  <div style="display:flex; gap:10px;">
+    {% if user.profile.is_gerente %}
+    <a href="{% url 'cargo_edit' object.pk %}" class="btn btn-secondary">Editar</a>
+    {% endif %}
+    <a href="{% url 'cargo_list' %}" class="btn btn-secondary">← Voltar</a>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Informações do Cargo</span>
+    </div>
+    <div class="card-body">
+      <div style="display:flex; flex-direction:column; gap:16px;">
+        <div>
+          <span style="color:var(--text-3); font-size:12px; font-weight:600;">DEPARTAMENTO</span>
+          <div style="font-size:16px; font-weight:500; margin-top:4px;">{{ object.id_departamento.nome }}</div>
+        </div>
+        <div>
+          <span style="color:var(--text-3); font-size:12px; font-weight:600;">NÍVEL</span>
+          <div style="font-size:16px; font-weight:500; margin-top:4px;">
+            <span class="badge badge-neutral">{{ object.get_nivel_display }}</span>
+          </div>
+        </div>
+        {% if object.descricao %}
+        <div>
+          <span style="color:var(--text-3); font-size:12px; font-weight:600;">DESCRIÇÃO</span>
+          <div style="font-size:14px; margin-top:4px; line-height:1.5;">{{ object.descricao }}</div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Funcionários</span>
+      <span class="badge badge-info">{{ object.funcionarios.count }}</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for func in object.funcionarios.all %}
+          <tr>
+            <td>
+              <div style="font-weight:500">{{ func.nome }}</div>
+              <div class="text-sm text-muted">{{ func.email }}</div>
+            </td>
+            <td>
+              {% if func.status == 'ativo' %}
+                <span class="badge badge-success">Ativo</span>
+              {% elif func.status == 'inativo' %}
+                <span class="badge badge-danger">Inativo</span>
+              {% else %}
+                <span class="badge badge-warn">Afastado</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="2" style="text-align:center; color:var(--text-3); padding:32px 16px;">
+              Nenhum funcionário neste cargo.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

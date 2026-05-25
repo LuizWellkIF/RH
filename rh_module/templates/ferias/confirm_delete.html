@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Excluir Solicitação #{{ object.id_solicitacao }} — RH Sistema{% endblock %}
+{% block topbar_title %}Excluir Solicitação{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Excluir Solicitação de Férias</h1>
+    <p>Esta ação não pode ser desfeita.</p>
+  </div>
+  <a href="{% url 'ferias_detail' object.pk %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div style="max-width: 560px;">
+  <div class="card" style="border-color:var(--border-danger);">
+    <div class="card-body" style="padding:24px;">
+
+      <div style="background:var(--bg-danger); color:var(--text-danger); padding:12px; border-radius:6px; margin-bottom:16px;">
+        ⚠️ Atenção! Você está prestes a excluir uma solicitação de férias.
+      </div>
+
+      <p style="margin:16px 0;">Tem certeza de que deseja excluir esta solicitação?</p>
+
+      <ul style="margin:16px 0; padding-left:20px;">
+        <li>ID: <strong>#{{ object.id_solicitacao }}</strong></li>
+        <li>Período: <strong>{{ object.data_inicio|date:"d/m/Y" }} a {{ object.data_fim|date:"d/m/Y" }}</strong></li>
+        <li>Status: <strong>{{ object.get_status_display }}</strong></li>
+      </ul>
+
+      <form method="post" style="margin-top:24px;">
+        {% csrf_token %}
+        <div style="display:flex; gap:10px;">
+          <button type="submit" class="btn btn-danger">Excluir Solicitação</button>
+          <a href="{% url 'ferias_detail' object.pk %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

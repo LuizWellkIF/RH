@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+
+{% block title %}Alterar Senha — RH Sistema{% endblock %}
+
+{% block auth_content %}
+<div class="login-wrap">
+
+  <div class="login-left">
+    <div class="left-brand">
+      <div class="label">Módulo</div>
+      <div class="name">RH <span>Sistema</span></div>
+    </div>
+
+    <div class="left-body">
+      <h2>Defina sua<br><strong>Nova Senha</strong></h2>
+      <p>Por segurança, você precisa cadastrar uma senha pessoal antes de acessar o sistema.</p>
+    </div>
+
+    <div class="left-modules">
+      <span class="module-pill active">● Primeiro Acesso</span>
+      <span class="module-pill">Senha Segura</span>
+      <span class="module-pill">Acesso Garantido</span>
+    </div>
+  </div>
+
+  <div class="login-right">
+    <div class="login-card">
+      <h1>Alterar Senha</h1>
+      <p class="subtitle">Crie uma senha pessoal para continuar.</p>
+      {% include 'autenticacao/_form_senha.html' %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block content %}
+{# Exibido para usuários já autenticados, dentro do layout com sidebar #}
+<div class="page-header">
+  <div>
+    <h1>Alterar Senha</h1>
+    <p>Atualize sua senha de acesso ao sistema</p>
+  </div>
+  
+</div>
+
+<div style="max-width:460px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Nova Senha</span>
+    </div>
+    <div class="card-body">
+      {% include 'autenticacao/_form_senha.html' %}
+    </div>
+  </div>
+</div>
+{% endblock %}

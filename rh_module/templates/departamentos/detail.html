@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ object.nome }} — RH Sistema{% endblock %}
+{% block topbar_title %}Departamento — {{ object.sigla }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ object.nome }}</h1>
+    <p>Sigla: <strong>{{ object.sigla }}</strong></p>
+  </div>
+  <div style="display:flex; gap:10px;">
+    {% if user.profile.is_gerente %}
+    <a href="{% url 'departamento_edit' object.pk %}" class="btn btn-secondary">Editar</a>
+    {% endif %}
+    <a href="{% url 'departamento_list' %}" class="btn btn-secondary">← Voltar</a>
+  </div>
+</div>
+
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; align-items:start;">
+
+  <!-- Funcionários do departamento -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Funcionários</span>
+      <span class="badge badge-info">{{ object.funcionarios.count }}</span>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nome</th>
+            <th>Cargo</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for func in object.funcionarios.all %}
+          <tr>
+            <td>
+              <div style="font-weight:500">{{ func.nome }}</div>
+              <div class="text-sm text-muted">{{ func.email }}</div>
+            </td>
+            <td>{{ func.id_cargo.nome }}</td>
+            <td>
+              {% if func.status == 'ativo' %}
+                <span class="badge badge-success">Ativo</span>
+              {% elif func.status == 'inativo' %}
+                <span class="badge badge-danger">Inativo</span>
+              {% else %}
+                <span class="badge badge-warn">Afastado</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" style="text-align:center; color:var(--text-3); padding:32px 16px;">
+              Nenhum funcionário neste departamento.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Cargos do departamento -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Cargos</span>
+      <span class="badge badge-info">{{ object.cargos.count }}</span>
+      {% if user.profile.is_gerente %}
+      <a href="{% url 'cargo_create_departamento' object.pk %}" class="btn btn-sm btn-primary" style="margin-left:auto;">+ Novo</a>
+      {% endif %}
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cargo</th>
+            <th>Nível</th>
+            {% if user.profile.is_gerente %}<th style="width:80px;"></th>{% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for cargo in object.cargos.all %}
+          <tr>
+            <td style="font-weight:500">
+              <a href="{% url 'cargo_detail' cargo.pk %}" style="color:inherit; text-decoration:none;">
+                {{ cargo.nome }}
+              </a>
+            </td>
+            <td>
+              <span class="badge badge-neutral">{{ cargo.get_nivel_display|default:"—" }}</span>
+            </td>
+            {% if user.profile.is_gerente %}
+            <td>
+              <div style="display:flex; gap:6px; justify-content:flex-end;">
+                <a href="{% url 'cargo_edit' cargo.pk %}" class="btn btn-sm btn-secondary" title="Editar">✎</a>
+                <a href="{% url 'cargo_delete' cargo.pk %}" class="btn btn-sm btn-secondary" title="Deletar">🗑</a>
+              </div>
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="{% if user.profile.is_gerente %}3{% else %}2{% endif %}" style="text-align:center; color:var(--text-3); padding:32px 16px;">
+              Nenhum cargo cadastrado.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
