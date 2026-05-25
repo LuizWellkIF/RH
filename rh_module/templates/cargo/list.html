@@ -1,1 +1,89 @@
-teste
+{% extends 'base.html' %}
+
+{% block title %}Cargos — RH Sistema{% endblock %}
+{% block topbar_title %}Cargos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Cargos</h1>
+    <p>Gerenciar todos os cargos da empresa.</p>
+  </div>
+  {% if user.profile.is_gerente %}
+  <a href="{% url 'cargo_create' %}" class="btn btn-primary">+ Novo Cargo</a>
+  {% endif %}
+</div>
+
+<div class="card">
+  <div class="card-body" style="padding:0;">
+    <div style="padding:16px; border-bottom:1px solid var(--border-1); display:flex; gap:12px;">
+      <form method="get" style="flex:1; display:flex; gap:8px;">
+        <input
+          type="text"
+          name="search"
+          value="{{ search }}"
+          class="form-control"
+          placeholder="Buscar cargo..."
+          style="flex:1;"
+        />
+        <select name="departamento" class="form-control" style="width:200px;">
+          <option value="">Todos os departamentos</option>
+          {% for dept in departamentos %}
+          <option value="{{ dept.id_departamento }}" {% if departamento_id|stringformat:"s" == dept.id_departamento|stringformat:"s" %}selected{% endif %}>
+            {{ dept.sigla }}
+          </option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+      </form>
+    </div>
+
+    {% if cargos %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cargo</th>
+            <th>Departamento</th>
+            <th>Nível</th>
+            <th>Funcionários</th>
+            <th style="width:100px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for cargo in cargos %}
+          <tr>
+            <td style="font-weight:500;">{{ cargo.nome }}</td>
+            <td>
+              <a href="{% url 'departamento_detail' cargo.id_departamento.pk %}" style="color:var(--text-link);">
+                {{ cargo.id_departamento.sigla }}
+              </a>
+            </td>
+            <td>
+              <span class="badge badge-neutral">{{ cargo.get_nivel_display }}</span>
+            </td>
+            <td style="text-align:center;">
+              {{ cargo.funcionarios.count }}
+            </td>
+            <td>
+              <div style="display:flex; gap:8px; justify-content:flex-end;">
+                <a href="{% url 'cargo_detail' cargo.pk %}" class="btn btn-sm btn-secondary" title="Ver">👁</a>
+                {% if user.profile.is_gerente %}
+                <a href="{% url 'cargo_edit' cargo.pk %}" class="btn btn-sm btn-secondary" title="Editar">✎</a>
+                <a href="{% url 'cargo_delete' cargo.pk %}" class="btn btn-sm btn-secondary" title="Deletar">🗑</a>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div style="text-align:center; padding:64px 16px; color:var(--text-3);">
+      <p style="margin:0;">Nenhum cargo encontrado.</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

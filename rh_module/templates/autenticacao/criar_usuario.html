@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+
+{% block title %}Novo Usuário — RH Sistema{% endblock %}
+{% block topbar_title %}Novo Usuário{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Criar Novo Usuário</h1>
+    <p>Cadastre um novo usuário para acessar o sistema.</p>
+  </div>
+  <a href="{% url 'listar_usuarios' %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div style="max-width: 560px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Dados do Novo Usuário</span>
+    </div>
+    <div class="card-body">
+      {% if usuario_criado %}
+      <div style="background:var(--bg-success); border:1px solid var(--text-success); padding:12px; border-radius:6px; margin-bottom:16px;">
+        <p style="margin:0; font-weight:500; color:var(--text-success);">Usuário criado com sucesso!</p>
+        <p style="margin:8px 0 0 0; color:var(--text-success); font-size:12px;">
+          Dados de acesso foram exibidos. Anote a senha temporária.
+        </p>
+      </div>
+      {% endif %}
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">Nome de Usuário</label>
+          {{ form.username }}
+          {% if form.username.errors %}
+          <span class="form-error">{{ form.username.errors.0 }}</span>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          {{ form.email }}
+          {% if form.email.errors %}
+          <span class="form-error">{{ form.email.errors.0 }}</span>
+          {% endif %}
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label class="form-label">Primeiro Nome</label>
+            {{ form.first_name }}
+            {% if form.first_name.errors %}
+            <span class="form-error">{{ form.first_name.errors.0 }}</span>
+            {% endif %}
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Sobrenome</label>
+            {{ form.last_name }}
+            {% if form.last_name.errors %}
+            <span class="form-error">{{ form.last_name.errors.0 }}</span>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Cargo RH</label>
+          {{ form.cargo_rh }}
+          {% if form.cargo_rh.errors %}
+          <span class="form-error">{{ form.cargo_rh.errors.0 }}</span>
+          {% endif %}
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:16px;">
+          <button type="submit" class="btn btn-primary">Criar Usuário</button>
+          <a href="{% url 'listar_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+
+      {% if usuario_criado and senha_gerada %}
+      <div style="margin-top:24px; padding:16px; background:var(--bg-2); border-radius:6px; border-left:4px solid var(--text-warn);">
+        <p style="margin:0 0 8px 0; font-weight:600; color:var(--text-warn);">Dados de Acesso Temporário</p>
+        <div style="display:grid; grid-template-columns: auto 1fr; gap:12px; align-items:center;">
+          <span style="font-weight:500;">Usuário:</span>
+          <code style="background:var(--bg-3); padding:6px 8px; border-radius:4px; font-family:monospace;">{{ usuario_criado.username }}</code>
+
+          <span style="font-weight:500;">Senha:</span>
+          <code style="background:var(--bg-3); padding:6px 8px; border-radius:4px; font-family:monospace;">{{ senha_gerada }}</code>
+        </div>
+        <p style="margin:12px 0 0 0; font-size:12px; color:var(--text-3);">
+          Compartilhe esses dados com segurança. O usuário será obrigado a alterar a senha no primeiro acesso.
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<style>
+  .form-control {
+    display: block;
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid var(--border-1);
+    border-radius: 4px;
+    font-size: 14px;
+    margin-top: 4px;
+  }
+  .form-control:focus {
+    outline: none;
+    border-color: var(--text-link);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+  }
+  .form-error {
+    display: block;
+    color: var(--text-danger);
+    font-size: 12px;
+    margin-top: 4px;
+  }
+</style>
+{% endblock %}

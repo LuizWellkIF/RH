@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Departamentos — RH Sistema{% endblock %}
+{% block topbar_title %}Departamentos{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Departamentos</h1>
+    <p>Unidades organizacionais da empresa</p>
+  </div>
+  {% if user.profile.is_gerente %}
+  <a href="{% url 'departamento_create' %}" class="btn btn-primary">+ Novo Departamento</a>
+  {% endif %}
+</div>
+
+<!-- Busca -->
+<div class="card" style="margin-bottom: 20px;">
+  <div class="card-body" style="padding: 16px 24px;">
+    <form method="get" style="display:flex; gap:12px; align-items:center;">
+      <input
+        type="text"
+        name="search"
+        value="{{ request.GET.search }}"
+        placeholder="Buscar por nome ou sigla..."
+        class="form-control"
+        style="max-width: 360px;"
+      />
+      <button type="submit" class="btn btn-secondary">Buscar</button>
+      {% if request.GET.search %}
+      <a href="{% url 'departamento_list' %}" class="btn btn-secondary">Limpar</a>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<!-- Tabela -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">{{ departamentos.count }} departamento{{ departamentos.count|pluralize }}</span>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Sigla</th>
+          <th>Nome</th>
+          <th>Funcionários</th>
+          <th>Cargos</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for depto in departamentos %}
+        <tr>
+          <td class="text-muted font-mono">{{ depto.id_departamento }}</td>
+          <td>
+            <span class="badge badge-info">{{ depto.sigla }}</span>
+          </td>
+          <td style="font-weight:500">{{ depto.nome }}</td>
+          <td class="text-muted">{{ depto.funcionarios.count }}</td>
+          <td class="text-muted">{{ depto.cargos.count }}</td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <a href="{% url 'departamento_detail' depto.pk %}" class="btn btn-secondary btn-sm">Ver</a>
+              {% if user.profile.is_gerente %}
+              <a href="{% url 'departamento_edit' depto.pk %}" class="btn btn-secondary btn-sm">Editar</a>
+              <a href="{% url 'departamento_delete' depto.pk %}" class="btn btn-danger btn-sm">Excluir</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" style="text-align:center; color:var(--text-3); padding:40px 16px;">
+            Nenhum departamento encontrado.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

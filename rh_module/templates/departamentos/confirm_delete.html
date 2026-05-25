@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Deletar Departamento — RH Sistema{% endblock %}
+{% block topbar_title %}Deletar Departamento{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Deletar Departamento</h1>
+    <p>Tem certeza que deseja deletar o departamento <strong>{{ object.nome }}</strong>?</p>
+  </div>
+  <a href="{% url 'departamento_list' %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div style="max-width: 560px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" style="color:var(--text-danger);">Aviso</span>
+    </div>
+    <div class="card-body">
+      <p style="margin-bottom:16px;">
+        Esta ação <strong>não pode ser desfeita</strong>. Por favor, confirme que deseja deletar o departamento:
+      </p>
+      <div style="background:var(--bg-2); padding:12px; border-radius:6px; margin-bottom:16px;">
+        <strong>{{ object.sigla }}</strong> - {{ object.nome }}<br>
+      </div>
+      <p style="color:var(--text-3); font-size:12px; margin-bottom:24px;">
+        Funcionários vinculados: <strong>{{ object.funcionarios.count }}</strong><br>
+        Cargos vinculados: <strong>{{ object.cargos.count }}</strong>
+      </p>
+      <form method="post" style="display:flex; gap:10px;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Sim, deletar</button>
+        <a href="{% url 'departamento_list' %}" class="btn btn-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

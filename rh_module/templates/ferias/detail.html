@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Solicitação #{{ object.id_solicitacao }} — RH Sistema{% endblock %}
+{% block topbar_title %}Férias — #{{ object.id_solicitacao }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{{ object.id_funcionario.nome }}</h1>
+    <p>Solicitação #{{ object.id_solicitacao }}</p>
+  </div>
+  <div style="display:flex; gap:10px;">
+    {% if object.status == 'pendente' and object.id_funcionario.id_usuario == user %}
+    <a href="{% url 'ferias_edit' object.pk %}" class="btn btn-secondary">Editar</a>
+    {% endif %}
+    <a href="{% url 'ferias_list' %}" class="btn btn-secondary">← Voltar</a>
+  </div>
+</div>
+
+<!-- Grid de informações -->
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-bottom:20px;">
+
+  <!-- Informações da solicitação -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Informações da Solicitação</span>
+    </div>
+    <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+
+      <div>
+        <label class="form-label" style="margin-bottom:4px;">Status</label>
+        {% if object.status == 'pendente' %}
+          <span class="badge badge-warn">Pendente</span>
+        {% elif object.status == 'aprovada' %}
+          <span class="badge badge-success">Aprovada</span>
+        {% else %}
+          <span class="badge badge-danger">Recusada</span>
+        {% endif %}
+      </div>
+
+      <div>
+        <label class="form-label" style="margin-bottom:4px;">Data de Início</label>
+        <div style="font-size:16px; font-weight:500;">{{ object.data_inicio|date:"d 'de' F 'de' Y" }}</div>
+      </div>
+
+      <div>
+        <label class="form-label" style="margin-bottom:4px;">Data de Fim</label>
+        <div style="font-size:16px; font-weight:500;">{{ object.data_fim|date:"d 'de' F 'de' Y" }}</div>
+      </div>
+
+      <div>
+        <label class="form-label" style="margin-bottom:4px;">Dias Solicitados</label>
+        <div style="font-size:16px; font-weight:500;">{{ object.dias_solicitados }} dia{{ object.dias_solicitados|pluralize }}</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Informações do funcionário -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Funcionário</span>
+    </div>
+    <div class="card-body" style="display:flex; flex-direction:column; gap:16px;">
+
+      <div>
+        <label class="form-label" style="margin-bottom:4px;">Nome</label>
+        <div style="font-size:16px; font-weight:500;">{{ object.id_funcionario.nome }}</div>
+      </div>
+
+      <div>
+        <label class="form-label" style="margin-bottom:4px;">Email</label>
+        <div style="font-size:14px;">{{ object.id_funcionario.email }}</div>
+      </div>
+
+      <div>
+        <label class="form-label" style="margin-bottom:4px;">Departamento</label>
+        <div style="font-size:14px;">{{ object.id_funcionario.id_departamento.nome }}</div>
+      </div>
+
+      <div>
+        <label class="form-label" style="margin-bottom:4px;">Cargo</label>
+        <div style="font-size:14px;">{{ object.id_funcionario.id_cargo.nome }}</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Observações -->
+<div class="card" style="margin-bottom:20px;">
+  <div class="card-header">
+    <span class="card-title">Observações</span>
+  </div>
+  <div class="card-body">
+    {% if object.observacao %}
+      <p style="margin:0; white-space:pre-wrap;">{{ object.observacao }}</p>
+    {% else %}
+      <p style="margin:0; color:var(--text-3);">Nenhuma observação adicionada.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Datas -->
+<div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+  <div class="card">
+    <div class="card-body" style="padding:16px 24px;">
+      <label class="form-label" style="margin-bottom:4px; color:var(--text-2);">Data de Solicitação</label>
+      <div style="font-size:14px;">{{ object.data_solicitacao|date:"d/m/Y H:i:s" }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Ações para gerentes -->
+{% if user.profile.is_gerente and object.status == 'pendente' %}
+<div style="margin-top:30px; padding:20px; border:1px solid var(--border); border-radius:8px; background:var(--bg-2);">
+  <h3 style="margin-top:0; margin-bottom:16px;">Ações de Gerenciamento</h3>
+  <div style="display:flex; gap:10px;">
+    <a href="{% url 'ferias_aprovar' object.pk %}" class="btn btn-success">✓ Aprovar</a>
+    <a href="{% url 'ferias_recusar' object.pk %}" class="btn btn-danger">✗ Recusar</a>
+  </div>
+</div>
+{% endif %}
+
+<!-- Opção de excluir para o funcionário -->
+{% if object.status == 'pendente' and object.id_funcionario.id_usuario == user %}
+<div style="margin-top:30px; padding:20px; border:1px solid var(--border); border-radius:8px; background:var(--bg-2);">
+  <h3 style="margin-top:0; margin-bottom:16px;">Opções</h3>
+  <div style="display:flex; gap:10px;">
+    <a href="{% url 'ferias_delete' object.pk %}" class="btn btn-danger">🗑 Excluir Solicitação</a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

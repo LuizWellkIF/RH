@@ -21,7 +21,7 @@
 
   <div class="sidebar-user">
     <div class="user-name">{{ user.get_full_name|default:user.username }}</div>
-    <div class="user-role">{{ user.profile.get_cargo_rh_display }}</div>
+    <div class="user-role">{{ user.profile.setor.nome }}</div>
     {% if user.profile.is_gerente %}
       <span class="badge-role">Gerente</span>
     {% else %}
@@ -29,7 +29,13 @@
     {% endif %}
   </div>
 
-  
+  <div class="sidebar-footer" style="border-top: 1px solid rgba(255,255,255,.1); flex-direction: column; align-items: flex-start; padding: 12px 24px; gap: 2px;">
+    <a href="{% url 'funcionarios_list' %}" style="font-size: 15px; color: rgb(255, 255, 255); padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05);">👨‍👩‍👧‍👦 Funcionários</a>
+    <a href="{% url 'ponto_registros' %}" style="font-size: 15px; color: rgb(255, 255, 255); padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05);">🕐 Registros de Ponto</a>
+    <a href="{% url 'departamento_list' %}" style="font-size: 15px; color: rgb(255, 255, 255); padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05);">🏢 Departamentos</a>
+    <a href="{% url 'cargo_list' %}" style="font-size: 15px; color: rgb(255, 255, 255); padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05);">🎯 Cargos</a>
+    <a href="{% url 'ferias_list' %}" style="font-size: 15px; color: rgb(255, 255, 255); padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.05);">🌴 Férias</a>
+  </div>
 
   <div class="sidebar-footer">
     <a href="{% url 'alterar_senha' %}">🔒 Alterar senha</a>

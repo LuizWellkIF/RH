@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if action == 'aprovar' %}Aprovar{% else %}Recusar{% endif %} Solicitação #{{ object.id_solicitacao }} — RH Sistema{% endblock %}
+{% block topbar_title %}{% if action == 'aprovar' %}Aprovar{% else %}Recusar{% endif %} Solicitação de Férias{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if action == 'aprovar' %}Aprovar{% else %}Recusar{% endif %} Solicitação de Férias</h1>
+    <p>{{ object.id_funcionario.nome }} — {{ object.data_inicio|date:"d/m/Y" }} a {{ object.data_fim|date:"d/m/Y" }}</p>
+  </div>
+  <a href="{% url 'ferias_detail' object.pk %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div style="max-width: 560px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Confirmar {% if action == 'aprovar' %}Aprovação{% else %}Rejeição{% endif %}</span>
+    </div>
+    <div class="card-body">
+
+      <div style="background:{% if action == 'aprovar' %}var(--bg-success){% else %}var(--bg-danger){% endif %}; color:{% if action == 'aprovar' %}var(--text-success){% else %}var(--text-danger){% endif %}; padding:12px; border-radius:6px; margin-bottom:16px;">
+        {% if action == 'aprovar' %}
+          ✓ Você está aprovando esta solicitação.
+        {% else %}
+          ✗ Você está recusando esta solicitação.
+        {% endif %}
+      </div>
+
+      <form method="post">
+        {% csrf_token %}
+
+        <div style="background:var(--bg-2); padding:16px; border-radius:6px; margin-bottom:16px;">
+          <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;">
+            <div>
+              <label class="form-label" style="margin-bottom:4px; color:var(--text-2);">Funcionário</label>
+              <div style="font-weight:500;">{{ object.id_funcionario.nome }}</div>
+            </div>
+            <div>
+              <label class="form-label" style="margin-bottom:4px; color:var(--text-2);">Período</label>
+              <div style="font-weight:500;">{{ object.dias_solicitados }} dias</div>
+            </div>
+          </div>
+          <div>
+            <label class="form-label" style="margin-bottom:4px; color:var(--text-2);">Datas</label>
+            <div>{{ object.data_inicio|date:"d 'de' F 'de' Y" }} a {{ object.data_fim|date:"d 'de' F 'de' Y" }}</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Observações (Opcional)</label>
+          <textarea
+            name="observacao"
+            class="form-control"
+            rows="4"
+            placeholder="{% if action == 'aprovar' %}Ex: Aprovado. Aproveite bem!{% else %}Ex: Período conflita com projeto importante.{% endif %}"
+          >{% if object.observacao %}{{ object.observacao }}{% endif %}</textarea>
+        </div>
+
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <button type="submit" class="btn {% if action == 'aprovar' %}btn-success{% else %}btn-danger{% endif %}">
+            {% if action == 'aprovar' %}✓ Aprovar{% else %}✗ Recusar{% endif %}
+          </button>
+          <a href="{% url 'ferias_detail' object.pk %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Novo{% endif %} Departamento — RH Sistema{% endblock %}
+{% block topbar_title %}{% if object %}Editar Departamento{% else %}Novo Departamento{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if object %}Editar Departamento{% else %}Novo Departamento{% endif %}</h1>
+    <p>{% if object %}Atualize os dados do departamento {{ object.sigla }}.{% else %}Preencha os dados para cadastrar um novo departamento.{% endif %}</p>
+  </div>
+  <a href="{% url 'departamento_list' %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div style="max-width: 560px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Dados do Departamento</span>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">Nome</label>
+          <input
+            type="text"
+            name="nome"
+            value="{{ object.nome|default:'' }}"
+            class="form-control"
+            placeholder="Ex: Tecnologia da Informação"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Sigla</label>
+          <input
+            type="text"
+            name="sigla"
+            value="{{ object.sigla|default:'' }}"
+            class="form-control"
+            placeholder="Ex: TI"
+            maxlength="10"
+            style="text-transform:uppercase;"
+            required
+          />
+          <span class="form-error" style="color:var(--text-3); font-size:12px;">
+            Deve ser única. Será convertida para maiúsculas automaticamente.
+          </span>
+        </div>
+
+        {% if form.errors %}
+        <div class="msg error" style="margin-bottom:16px;">
+          {% for field, errors in form.errors.items %}
+            {% for error in errors %}{{ error }}{% endfor %}
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <button type="submit" class="btn btn-primary">
+            {% if object %}Salvar Alterações{% else %}Cadastrar Departamento{% endif %}
+          </button>
+          <a href="{% url 'departamento_list' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

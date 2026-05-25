@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block title %}Desativar Usuário — RH Sistema{% endblock %}
+{% block topbar_title %}Desativar Usuário{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>Desativar Usuário</h1>
+    <p>Tem certeza que deseja desativar o usuário <strong>{{ profile.user.username }}</strong>?</p>
+  </div>
+  <a href="{% url 'listar_usuarios' %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div style="max-width: 560px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" style="color:var(--text-danger);">Aviso</span>
+    </div>
+    <div class="card-body">
+      <p style="margin-bottom:16px;">
+        Esta ação vai <strong>desativar o acesso</strong> deste usuário ao sistema. Ele poderá ser reativado depois.
+      </p>
+      <div style="background:var(--bg-2); padding:12px; border-radius:6px; margin-bottom:16px;">
+        <strong>{{ profile.user.username }}</strong><br>
+        <span style="color:var(--text-3); font-size:12px;">{{ profile.user.email }}</span>
+        {% if profile.funcionario %}
+        <div style="margin-top:8px; font-size:12px; color:var(--text-3);">
+          Funcionário: {{ profile.funcionario.nome }}
+        </div>
+        {% endif %}
+      </div>
+      <form method="post" style="display:flex; gap:10px;">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Sim, desativar acesso</button>
+        <a href="{% url 'listar_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

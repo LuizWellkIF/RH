@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar{% else %}Novo{% endif %} Cargo — RH Sistema{% endblock %}
+{% block topbar_title %}{% if object %}Editar Cargo{% else %}Novo Cargo{% endif %}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div>
+    <h1>{% if object %}Editar Cargo{% else %}Novo Cargo{% endif %}</h1>
+    <p>{% if object %}Atualize os dados do cargo {{ object.nome }}.{% else %}Preencha os dados para cadastrar um novo cargo.{% endif %}</p>
+  </div>
+  <a href="{% url 'cargo_list' %}" class="btn btn-secondary">← Voltar</a>
+</div>
+
+<div style="max-width: 560px;">
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Dados do Cargo</span>
+    </div>
+    <div class="card-body">
+      <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+          <label class="form-label">Departamento</label>
+          <select name="id_departamento" class="form-control" required>
+            <option value="">Selecione um departamento</option>
+            {% for dept in departamentos %}
+            <option value="{{ dept.id_departamento }}" {% if object.id_departamento.id_departamento == dept.id_departamento or departamento.id_departamento == dept.id_departamento %}selected{% endif %}>
+              {{ dept.sigla }} - {{ dept.nome }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nome do Cargo</label>
+          <input
+            type="text"
+            name="nome"
+            value="{{ object.nome|default:'' }}"
+            class="form-control"
+            placeholder="Ex: Analista de Sistemas"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nível</label>
+          <select name="nivel" class="form-control" required>
+            <option value="">Selecione um nível</option>
+            <option value="1" {% if object.nivel == 1 %}selected{% endif %}>Júnior</option>
+            <option value="2" {% if object.nivel == 2 %}selected{% endif %}>Pleno</option>
+            <option value="3" {% if object.nivel == 3 %}selected{% endif %}>Sênior</option>
+            <option value="4" {% if object.nivel == 4 %}selected{% endif %}>Coordenador</option>
+            <option value="5" {% if object.nivel == 5 %}selected{% endif %}>Gerente</option>
+            <option value="6" {% if object.nivel == 6 %}selected{% endif %}>Diretor</option>
+          </select>
+          <span class="form-error" style="color:var(--text-3); font-size:12px;">
+            Selecione o nível hierárquico do cargo.
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Descrição</label>
+          <textarea
+            name="descricao"
+            class="form-control"
+            placeholder="Descrição das responsabilidades do cargo"
+            rows="4"
+          >{{ object.descricao|default:'' }}</textarea>
+        </div>
+
+        {% if form.errors %}
+        <div class="msg error" style="margin-bottom:16px;">
+          {% for field, errors in form.errors.items %}
+            {% for error in errors %}{{ error }}{% endfor %}
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <div style="display:flex; gap:10px; margin-top:8px;">
+          <button type="submit" class="btn btn-primary">
+            {% if object %}Salvar Alterações{% else %}Cadastrar Cargo{% endif %}
+          </button>
+          <a href="{% url 'cargo_list' %}" class="btn btn-secondary">Cancelar</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
