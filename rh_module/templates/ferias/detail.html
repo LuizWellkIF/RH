@@ -10,7 +10,7 @@
     <p>Solicitação #{{ object.id_solicitacao }}</p>
   </div>
   <div style="display:flex; gap:10px;">
-    {% if object.status == 'pendente' and object.id_funcionario.id_usuario == user %}
+    {% if can_edit %}
     <a href="{% url 'ferias_edit' object.pk %}" class="btn btn-secondary">Editar</a>
     {% endif %}
     <a href="{% url 'ferias_list' %}" class="btn btn-secondary">← Voltar</a>
@@ -40,12 +40,12 @@
 
       <div>
         <label class="form-label" style="margin-bottom:4px;">Data de Início</label>
-        <div style="font-size:16px; font-weight:500;">{{ object.data_inicio|date:"d 'de' F 'de' Y" }}</div>
+        <div style="font-size:16px; font-weight:500;">{{ object.data_inicio|date:"d \d\e F \d\e Y" }}</div>
       </div>
 
       <div>
         <label class="form-label" style="margin-bottom:4px;">Data de Fim</label>
-        <div style="font-size:16px; font-weight:500;">{{ object.data_fim|date:"d 'de' F 'de' Y" }}</div>
+        <div style="font-size:16px; font-weight:500;">{{ object.data_fim|date:"d \d\e F \d\e Y" }}</div>
       </div>
 
       <div>
@@ -113,7 +113,7 @@
 </div>
 
 <!-- Ações para gerentes -->
-{% if user.profile.is_gerente and object.status == 'pendente' %}
+{% if can_approve %}
 <div style="margin-top:30px; padding:20px; border:1px solid var(--border); border-radius:8px; background:var(--bg-2);">
   <h3 style="margin-top:0; margin-bottom:16px;">Ações de Gerenciamento</h3>
   <div style="display:flex; gap:10px;">
@@ -124,7 +124,7 @@
 {% endif %}
 
 <!-- Opção de excluir para o funcionário -->
-{% if object.status == 'pendente' and object.id_funcionario.id_usuario == user %}
+{% if can_delete %}
 <div style="margin-top:30px; padding:20px; border:1px solid var(--border); border-radius:8px; background:var(--bg-2);">
   <h3 style="margin-top:0; margin-bottom:16px;">Opções</h3>
   <div style="display:flex; gap:10px;">

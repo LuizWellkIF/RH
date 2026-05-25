@@ -8,6 +8,7 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from funcionarios.models import Funcionario
 
 
 def _get_user_profile(user):
@@ -24,6 +25,28 @@ def _get_funcionario_do_usuario(user):
 def _user_is_gerente(user):
     perfil = _get_user_profile(user)
     return user.is_superuser or (perfil is not None and getattr(perfil, 'is_gerente', False))
+
+
+def _validate_periodo_ferias(funcionario, data_inicio, data_fim, instance=None):
+    if data_fim <= data_inicio:
+        return 'A data de fim deve ser posterior à data de início.'
+
+    if (data_fim - data_inicio).days + 1 < 5:
+        return 'O período mínimo de férias é de 5 dias.'
+
+    sobreposicao = SolicitacaoFerias.objects.filter(
+        id_funcionario=funcionario,
+        status='aprovada',
+        data_inicio__lte=data_fim,
+        data_fim__gte=data_inicio,
+    )
+    if instance is not None:
+        sobreposicao = sobreposicao.exclude(pk=instance.pk)
+
+    if sobreposicao.exists():
+        return 'Já existe férias aprovadas nesse período para este funcionário.'
+
+    return None
 
 
 class SolicitacaoFeriasViewSet(viewsets.ModelViewSet):
@@ -70,10 +93,12 @@ class SolicitacaoFeriasViewSet(viewsets.ModelViewSet):
 def ferias_list(request):
     search = request.GET.get('search', '')
     status = request.GET.get('status', '')
+    funcionario_id = (request.GET.get('id_funcionario') or '').strip()
     solicitacoes = SolicitacaoFerias.objects.select_related('id_funcionario')
     user_funcionario = _get_funcionario_do_usuario(request.user)
+    is_gerente = _user_is_gerente(request.user)
 
-    if _user_is_gerente(request.user):
+    if is_gerente:
         solicitacoes = solicitacoes.all()
     else:
         if user_funcionario is None:
@@ -90,11 +115,16 @@ def ferias_list(request):
     if status:
         solicitacoes = solicitacoes.filter(status=status)
 
+    if is_gerente and funcionario_id.isdigit():
+        solicitacoes = solicitacoes.filter(id_funcionario_id=int(funcionario_id))
+
     return render(request, 'ferias/list.html', {
         'solicitacoes': solicitacoes,
         'status_filter': status,
+        'funcionario_id_filter': funcionario_id,
+        'funcionarios': Funcionario.objects.order_by('nome') if is_gerente else [],
         'user_funcionario': user_funcionario,
-        'is_gerente': _user_is_gerente(request.user),
+        'is_gerente': is_gerente,
     })
 
 
@@ -136,13 +166,14 @@ def ferias_create(request):
             messages.error(request, 'Formato de data inválido.')
             return render(request, 'ferias/form.html')
 
-        if d_inicio > d_fim:
-            messages.error(request, 'Data de início não pode ser maior que data de fim.')
-            return render(request, 'ferias/form.html')
-
         funcionario = _get_funcionario_do_usuario(request.user)
         if funcionario is None:
             messages.error(request, 'Não foi possível criar a solicitação porque seu usuário não está vinculado a um funcionário.')
+            return render(request, 'ferias/form.html')
+
+        erro = _validate_periodo_ferias(funcionario, d_inicio, d_fim)
+        if erro:
+            messages.error(request, erro)
             return render(request, 'ferias/form.html')
 
         SolicitacaoFerias.objects.create(
@@ -187,8 +218,12 @@ def ferias_edit(request, pk):
             messages.error(request, 'Formato de data inválido.')
             return render(request, 'ferias/form.html', {'object': solicitacao})
 
-        if d_inicio > d_fim:
-            messages.error(request, 'Data de início não pode ser maior que data de fim.')
+        erro = _validate_periodo_ferias(funcionario, d_inicio, d_fim, instance=solicitacao)
+        if erro:
+            messages.error(request, erro)
+            solicitacao.data_inicio = d_inicio
+            solicitacao.data_fim = d_fim
+            solicitacao.observacao = observacao
             return render(request, 'ferias/form.html', {'object': solicitacao})
 
         solicitacao.data_inicio = d_inicio
