@@ -36,7 +36,6 @@ def login_view(request):
 
 def logout_view(request):
     logout(request)
-    messages.info(request, 'Você saiu do sistema.')
     return redirect('login')
 
 

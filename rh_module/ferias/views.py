@@ -1,4 +1,4 @@
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, status as drf_status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
@@ -22,9 +22,21 @@ def _get_funcionario_do_usuario(user):
     return getattr(perfil, 'funcionario', None)
 
 
-def _user_is_gerente(user):
+def _user_is_rh(user):
     perfil = _get_user_profile(user)
-    return user.is_superuser or (perfil is not None and getattr(perfil, 'is_gerente', False))
+    return user.is_superuser or (perfil is not None and perfil.is_rh)
+
+
+def _user_can_decide_ferias(user):
+    if user.is_superuser:
+        return True
+
+    if not _user_is_rh(user):
+        return False
+
+    funcionario = _get_funcionario_do_usuario(user)
+    cargo = getattr(funcionario, 'id_cargo', None)
+    return getattr(cargo, 'nivel', None) in (4, 5, 6)
 
 
 def _validate_periodo_ferias(funcionario, data_inicio, data_fim, instance=None):
@@ -58,6 +70,12 @@ class SolicitacaoFeriasViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'], url_path='aprovar')
     def aprovar(self, request, pk=None):
+        if not _user_can_decide_ferias(request.user):
+            return Response(
+                {'erro': 'Apenas cargos de nível 4, 5 ou 6 podem aprovar férias.'},
+                status=drf_status.HTTP_403_FORBIDDEN
+            )
+
         solicitacao = self.get_object()
 
         if solicitacao.status != 'pendente':
@@ -74,6 +92,12 @@ class SolicitacaoFeriasViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['patch'], url_path='recusar')
     def recusar(self, request, pk=None):
+        if not _user_can_decide_ferias(request.user):
+            return Response(
+                {'erro': 'Apenas cargos de nível 4, 5 ou 6 podem recusar férias.'},
+                status=drf_status.HTTP_403_FORBIDDEN
+            )
+
         solicitacao = self.get_object()
 
         if solicitacao.status != 'pendente':
@@ -96,9 +120,10 @@ def ferias_list(request):
     funcionario_id = (request.GET.get('id_funcionario') or '').strip()
     solicitacoes = SolicitacaoFerias.objects.select_related('id_funcionario')
     user_funcionario = _get_funcionario_do_usuario(request.user)
-    is_gerente = _user_is_gerente(request.user)
+    can_view_all_ferias = _user_is_rh(request.user)
+    can_decide_ferias = _user_can_decide_ferias(request.user)
 
-    if is_gerente:
+    if can_view_all_ferias:
         solicitacoes = solicitacoes.all()
     else:
         if user_funcionario is None:
@@ -115,16 +140,17 @@ def ferias_list(request):
     if status:
         solicitacoes = solicitacoes.filter(status=status)
 
-    if is_gerente and funcionario_id.isdigit():
+    if can_view_all_ferias and funcionario_id.isdigit():
         solicitacoes = solicitacoes.filter(id_funcionario_id=int(funcionario_id))
 
     return render(request, 'ferias/list.html', {
         'solicitacoes': solicitacoes,
         'status_filter': status,
         'funcionario_id_filter': funcionario_id,
-        'funcionarios': Funcionario.objects.order_by('nome') if is_gerente else [],
+        'funcionarios': Funcionario.objects.order_by('nome') if can_view_all_ferias else [],
         'user_funcionario': user_funcionario,
-        'is_gerente': is_gerente,
+        'can_view_all_ferias': can_view_all_ferias,
+        'can_decide_ferias': can_decide_ferias,
     })
 
 
@@ -132,18 +158,22 @@ def ferias_list(request):
 def ferias_detail(request, pk):
     solicitacao = get_object_or_404(SolicitacaoFerias, pk=pk)
 
-    if not _user_is_gerente(request.user):
+    if not _user_is_rh(request.user):
         funcionario = _get_funcionario_do_usuario(request.user)
         if funcionario is None or solicitacao.id_funcionario != funcionario:
             messages.error(request, 'Você não tem permissão para acessar esta solicitação.')
             return redirect('ferias_list')
 
+    user_funcionario = _get_funcionario_do_usuario(request.user)
+    can_decide_ferias = _user_can_decide_ferias(request.user)
+
     return render(request, 'ferias/detail.html', {
         'object': solicitacao,
-        'can_edit': (solicitacao.status == 'pendente' and _get_funcionario_do_usuario(request.user) == solicitacao.id_funcionario),
-        'can_delete': (solicitacao.status == 'pendente' and _get_funcionario_do_usuario(request.user) == solicitacao.id_funcionario),
-        'can_approve': (_user_is_gerente(request.user) and solicitacao.status == 'pendente'),
-        'is_gerente': _user_is_gerente(request.user),
+        'can_edit': (solicitacao.status == 'pendente' and user_funcionario == solicitacao.id_funcionario),
+        'can_delete': (solicitacao.status == 'pendente' and user_funcionario == solicitacao.id_funcionario),
+        'can_approve': (can_decide_ferias and solicitacao.status == 'pendente'),
+        'can_view_all_ferias': _user_is_rh(request.user),
+        'can_decide_ferias': can_decide_ferias,
     })
 
 
@@ -259,8 +289,8 @@ def ferias_delete(request, pk):
 
 @login_required
 def ferias_aprovar(request, pk):
-    if not _user_is_gerente(request.user):
-        messages.error(request, 'Apenas gerentes podem aprovar férias.')
+    if not _user_can_decide_ferias(request.user):
+        messages.error(request, 'Apenas cargos de nível 4, 5 ou 6 podem aprovar férias.')
         return redirect('ferias_list')
 
     solicitacao = get_object_or_404(SolicitacaoFerias, pk=pk)
@@ -286,8 +316,8 @@ def ferias_aprovar(request, pk):
 
 @login_required
 def ferias_recusar(request, pk):
-    if not _user_is_gerente(request.user):
-        messages.error(request, 'Apenas gerentes podem recusar férias.')
+    if not _user_can_decide_ferias(request.user):
+        messages.error(request, 'Apenas cargos de nível 4, 5 ou 6 podem recusar férias.')
         return redirect('ferias_list')
 
     solicitacao = get_object_or_404(SolicitacaoFerias, pk=pk)
