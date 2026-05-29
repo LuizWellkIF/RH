@@ -25,7 +25,7 @@
         style="max-width: 300px;"
       />
 
-      {% if is_gerente %}
+      {% if can_view_all_ferias %}
       <select name="id_funcionario" class="form-control" style="max-width: 320px;">
         <option value="">Todos os funcionários</option>
         {% for f in funcionarios %}
@@ -98,7 +98,7 @@
               <a href="{% url 'ferias_delete' sol.pk %}" class="btn btn-danger btn-sm">Excluir</a>
               {% endif %}
 
-              {% if is_gerente and sol.status == 'pendente' %}
+              {% if can_decide_ferias and sol.status == 'pendente' %}
               <a href="{% url 'ferias_aprovar' sol.pk %}" class="btn btn-success btn-sm">Aprovar</a>
               <a href="{% url 'ferias_recusar' sol.pk %}" class="btn btn-danger btn-sm">Recusar</a>
               {% endif %}

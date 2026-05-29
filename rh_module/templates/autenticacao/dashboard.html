@@ -93,7 +93,7 @@
     <div class="card">
       <div class="card-header">
         <span class="card-title">Férias Pendentes</span>
-        <a href="#" class="btn btn-secondary btn-sm">Ver todas</a>
+        <a href="{% url 'ferias_list' %}" class="btn btn-secondary btn-sm">Ver todas</a>
       </div>
       <div style="padding:0">
         {% for solicitacao in ferias_pendentes %}
