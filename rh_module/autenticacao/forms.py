@@ -7,6 +7,10 @@ from departamentos.models import Departamento
 
 
 class LoginForm(AuthenticationForm):
+    error_messages = {
+        'invalid_login': 'Usuário ou senha inválidos.',
+        'inactive': 'Este usuário está inativo.',
+    }
     username = forms.CharField(
         label='Usuário',
         widget=forms.TextInput(attrs={'placeholder': 'Seu usuário', 'autofocus': True})
