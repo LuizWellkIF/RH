@@ -9,7 +9,7 @@
     <h1>Editar Usuário</h1>
     <p>Atualize as informações do usuário <strong>{{ profile.user.username }}</strong>.</p>
   </div>
-  <a href="{% url 'listar_usuarios' %}" class="btn btn-secondary">← Voltar</a>
+  <a href="{% url 'listar_usuarios' %}" class="btn btn-secondary">&larr; Voltar</a>
 </div>
 
 <div style="max-width: 560px;">
@@ -23,12 +23,7 @@
 
         <div class="form-group">
           <label class="form-label">Nome de Usuário</label>
-          <input
-            type="text"
-            value="{{ profile.user.username }}"
-            class="form-control"
-            disabled
-          />
+          <input type="text" value="{{ profile.user.username }}" class="form-control" disabled />
           <span class="form-error" style="color:var(--text-3); font-size:12px;">
             Não pode ser alterado
           </span>
@@ -36,63 +31,51 @@
 
         <div class="form-group">
           <label class="form-label">Email</label>
-          <input
-            type="email"
-            name="email"
-            value="{{ profile.user.email }}"
-            class="form-control"
-            required
-          />
+          <input type="email" name="email" value="{{ profile.user.email }}" class="form-control" required />
         </div>
 
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
           <div class="form-group">
             <label class="form-label">Primeiro Nome</label>
-            <input
-              type="text"
-              name="first_name"
-              value="{{ profile.user.first_name }}"
-              class="form-control"
-            />
+            <input type="text" name="first_name" value="{{ profile.user.first_name }}" class="form-control" />
           </div>
 
           <div class="form-group">
             <label class="form-label">Sobrenome</label>
-            <input
-              type="text"
-              name="last_name"
-              value="{{ profile.user.last_name }}"
-              class="form-control"
-            />
+            <input type="text" name="last_name" value="{{ profile.user.last_name }}" class="form-control" />
           </div>
         </div>
 
         <div class="form-group">
-          <label class="form-label">Cargo RH</label>
-          <select name="cargo_rh" class="form-control" required>
-            <option value="analista" {% if profile.cargo_rh == 'analista' %}selected{% endif %}>
-              Analista de RH
+          <label class="form-label">Setor / Departamento</label>
+          <select name="setor" class="form-control" required>
+            <option value="">Selecione um departamento</option>
+            {% for departamento in departamentos %}
+            <option value="{{ departamento.pk }}" {% if profile.setor_id == departamento.pk %}selected{% endif %}>
+              {{ departamento.nome }}
             </option>
-            <option value="gerente" {% if profile.cargo_rh == 'gerente' %}selected{% endif %}>
-              Gerente / Diretor de RH
-            </option>
+            {% endfor %}
           </select>
         </div>
 
-        {% if profile.funcionario %}
         <div class="form-group">
-          <label class="form-label">Funcionário Vinculado</label>
-          <input
-            type="text"
-            value="{{ profile.funcionario.nome }}"
-            class="form-control"
-            disabled
-          />
-          <span class="form-error" style="color:var(--text-3); font-size:12px;">
-            Departamento: {{ profile.funcionario.id_departamento.nome }}
-          </span>
+          <label class="form-label">Funcionário vinculado</label>
+          <select name="funcionario" class="form-control">
+            <option value="">Nenhum funcionário vinculado</option>
+            {% for funcionario in funcionarios %}
+            <option value="{{ funcionario.pk }}" {% if profile.funcionario_id == funcionario.pk %}selected{% endif %}>
+              {{ funcionario.nome }} — {{ funcionario.id_departamento.sigla }}
+            </option>
+            {% endfor %}
+          </select>
         </div>
-        {% endif %}
+
+        <div class="form-group">
+          <label style="display:flex; gap:8px; align-items:center; color:var(--text-2);">
+            <input type="checkbox" name="is_gerente" {% if profile.is_gerente %}checked{% endif %} />
+            <span>Gerente do setor</span>
+          </label>
+        </div>
 
         <div style="display:flex; gap:10px; margin-top:16px;">
           <button type="submit" class="btn btn-primary">Salvar Alterações</button>

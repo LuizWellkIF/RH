@@ -44,7 +44,8 @@ class Command(BaseCommand):
                 UserProfile.objects.create(
                     user=user,
                     funcionario=funcionario,
-                    cargo_rh='analista',
+                    setor=funcionario.id_departamento,
+                    is_gerente=False,
                     primeiro_acesso=True
                 )
 
