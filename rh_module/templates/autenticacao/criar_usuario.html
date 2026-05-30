@@ -9,7 +9,7 @@
     <h1>Criar Novo Usuário</h1>
     <p>Cadastre um novo usuário para acessar o sistema.</p>
   </div>
-  <a href="{% url 'listar_usuarios' %}" class="btn btn-secondary">← Voltar</a>
+  <a href="{% url 'listar_usuarios' %}" class="btn btn-secondary">&larr; Voltar</a>
 </div>
 
 <div style="max-width: 560px;">
@@ -65,10 +65,36 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Cargo RH</label>
-          {{ form.cargo_rh }}
-          {% if form.cargo_rh.errors %}
-          <span class="form-error">{{ form.cargo_rh.errors.0 }}</span>
+          <label class="form-label">Senha inicial</label>
+          {{ form.password }}
+          {% if form.password.errors %}
+          <span class="form-error">{{ form.password.errors.0 }}</span>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Setor / Departamento</label>
+          {{ form.setor }}
+          {% if form.setor.errors %}
+          <span class="form-error">{{ form.setor.errors.0 }}</span>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Funcionário vinculado</label>
+          {{ form.funcionario }}
+          {% if form.funcionario.errors %}
+          <span class="form-error">{{ form.funcionario.errors.0 }}</span>
+          {% endif %}
+        </div>
+
+        <div class="form-group">
+          <label style="display:flex; gap:8px; align-items:center; color:var(--text-2);">
+            {{ form.is_gerente }}
+            <span>Gerente do setor</span>
+          </label>
+          {% if form.is_gerente.errors %}
+          <span class="form-error">{{ form.is_gerente.errors.0 }}</span>
           {% endif %}
         </div>
 
@@ -96,27 +122,4 @@
     </div>
   </div>
 </div>
-
-<style>
-  .form-control {
-    display: block;
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid var(--border-1);
-    border-radius: 4px;
-    font-size: 14px;
-    margin-top: 4px;
-  }
-  .form-control:focus {
-    outline: none;
-    border-color: var(--text-link);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-  }
-  .form-error {
-    display: block;
-    color: var(--text-danger);
-    font-size: 12px;
-    margin-top: 4px;
-  }
-</style>
 {% endblock %}

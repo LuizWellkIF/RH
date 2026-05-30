@@ -29,7 +29,7 @@ class CriarUsuarioForm(forms.ModelForm):
     is_gerente  = forms.BooleanField(label='É gerente do setor?', required=False)
     funcionario = forms.ModelChoiceField(
         label='Funcionário vinculado',
-        queryset=Funcionario.objects.filter(status='ativo').order_by('nome'),
+        queryset=Funcionario.objects.filter(status='ativo', user_profile__isnull=True).order_by('nome'),
         required=False,
         empty_label='Selecione um funcionário (opcional)',
     )
@@ -38,24 +38,25 @@ class CriarUsuarioForm(forms.ModelForm):
         model  = User
         fields = ['username', 'first_name', 'last_name', 'email', 'password']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            if field_name == 'is_gerente':
+                field.widget.attrs.update({'class': 'form-check-input'})
+            else:
+                field.widget.attrs.update({'class': 'form-control'})
+
     def save(self, commit=True):
         user = super().save(commit=False)
         user.set_password(self.cleaned_data['password'])
         if commit:
             user.save()
-            # Atualiza o UserProfile já criado pelo signal
-            profile = user.funcionario.user_profile if hasattr(user, 'funcionario') else None
-            if profile:
-                profile.setor      = self.cleaned_data['setor']
-                profile.is_gerente = self.cleaned_data['is_gerente']
-                profile.save()
-            else:
-                UserProfile.objects.create(
-                    user=user,
-                    funcionario=self.cleaned_data.get('funcionario'),
-                    setor=self.cleaned_data['setor'],
-                    is_gerente=self.cleaned_data['is_gerente'],
-                )
+            UserProfile.objects.create(
+                user=user,
+                funcionario=self.cleaned_data.get('funcionario'),
+                setor=self.cleaned_data['setor'],
+                is_gerente=self.cleaned_data['is_gerente'],
+            )
         return user
 
 

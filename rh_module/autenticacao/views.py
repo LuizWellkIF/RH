@@ -3,6 +3,7 @@ from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.contrib import messages
+from django.db.models import Q
 from django.utils import timezone
 
 from .forms import LoginForm, CriarUsuarioForm, AlterarSenhaForm
@@ -69,7 +70,9 @@ def dashboard_view(request):
 
 @gerente_required
 def listar_usuarios_view(request):
-    usuarios = UserProfile.objects.select_related('user', 'funcionario').all()
+    usuarios = UserProfile.objects.select_related(
+        'user', 'funcionario', 'setor'
+    ).all()
     return render(request, 'autenticacao/listar_usuarios.html', {'usuarios': usuarios})
 
 
@@ -100,14 +103,39 @@ def editar_usuario_view(request, pk):
         user.email      = request.POST.get('email',      user.email)
         user.save()
 
-        profile.setor      = request.POST.get('setor',      profile.setor)
+        setor_id = request.POST.get('setor')
+        funcionario_id = request.POST.get('funcionario')
+
+        if setor_id:
+            profile.setor_id = setor_id
+        else:
+            profile.setor = None
+
+        if funcionario_id:
+            funcionario_em_uso = UserProfile.objects.filter(
+                funcionario_id=funcionario_id
+            ).exclude(pk=profile.pk).exists()
+            if funcionario_em_uso:
+                messages.error(request, 'Este funcionário já está vinculado a outro usuário.')
+                return redirect('editar_usuario', pk=profile.pk)
+            profile.funcionario_id = funcionario_id
+        else:
+            profile.funcionario = None
+
         profile.is_gerente = request.POST.get('is_gerente') == 'on'
         profile.save()
 
         messages.success(request, 'Usuário atualizado com sucesso!')
         return redirect('listar_usuarios')
 
-    return render(request, 'autenticacao/editar_usuario.html', {'profile': profile})
+    return render(request, 'autenticacao/editar_usuario.html', {
+        'profile': profile,
+        'departamentos': Departamento.objects.order_by('nome'),
+        'funcionarios': Funcionario.objects.filter(
+            Q(user_profile__isnull=True) | Q(user_profile=profile),
+            status='ativo',
+        ).order_by('nome'),
+    })
 
 
 @gerente_required
@@ -125,44 +153,6 @@ def desativar_usuario_view(request, pk):
         return redirect('listar_usuarios')
 
     return render(request, 'autenticacao/confirmar_desativar.html', {'profile': profile})
-
-
-@gerente_required
-def reativar_usuario_view(request, pk):
-    profile = get_object_or_404(UserProfile, pk=pk)
-
-    if request.method == 'POST':
-        profile.user.is_active = True
-        profile.user.save()
-        messages.success(request, f'Usuário {profile.user.username} reativado.')
-        return redirect('listar_usuarios')
-
-    return render(request, 'autenticacao/confirmar_reativar.html', {'profile': profile})
-
-
-@gerente_required
-def redefinir_senha_view(request, pk):
-    """Gerente redefine a senha de um usuário, forçando troca no próximo acesso."""
-    profile = get_object_or_404(UserProfile, pk=pk)
-
-    if request.method == 'POST':
-        nome_parts  = profile.user.first_name.lower().split()
-        primeiro    = nome_parts[0] if nome_parts else profile.user.username
-        ultimo      = profile.user.last_name.lower().split()[-1] if profile.user.last_name else primeiro
-        nova_senha  = f'{primeiro}.{ultimo}123'
-
-        profile.user.set_password(nova_senha)
-        profile.user.save()
-        profile.primeiro_acesso = True
-        profile.save()
-
-        messages.success(
-            request,
-            f'Senha de {profile.user.get_full_name()} redefinida para: {nova_senha}'
-        )
-        return redirect('listar_usuarios')
-
-    return render(request, 'autenticacao/confirmar_redefinir_senha.html', {'profile': profile})
 
 
 # ── Senha ─────────────────────────────────────────────────────────────────────
