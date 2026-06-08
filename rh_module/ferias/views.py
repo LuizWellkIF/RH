@@ -1,3 +1,6 @@
+# ferias/views.py
+from drf_spectacular.utils import extend_schema_view, extend_schema
+
 from rest_framework import viewsets, filters, status as drf_status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -10,6 +13,8 @@ from django.contrib import messages
 from django.db.models import Q
 from funcionarios.models import Funcionario
 
+
+# ── Helpers internos ───────────────────────────────────────────────────────────
 
 def _get_user_profile(user):
     return getattr(user, 'profile', None)
@@ -61,6 +66,53 @@ def _validate_periodo_ferias(funcionario, data_inicio, data_fim, instance=None):
     return None
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Gestão de Férias"],
+        summary="Listar solicitações de férias",
+        description=(
+            "Retorna a lista paginada de todas as solicitações de férias.\n\n"
+            "**Filtros disponíveis:**\n"
+            "- `id_funcionario` – filtra pelo ID do funcionário\n"
+            "- `status` – filtra pelo status (`pendente`, `aprovada`, `recusada`)\n\n"
+            "**Ordenação:** parâmetro `ordering` aceita `data_solicitacao` e `data_inicio`."
+        ),
+    ),
+    create=extend_schema(
+        tags=["Gestão de Férias"],
+        summary="Criar solicitação de férias",
+        description=(
+            "Abre uma nova solicitação de férias para um funcionário.\n\n"
+            "**Regras de validação:**\n"
+            "- A data de fim deve ser posterior à data de início\n"
+            "- O período mínimo é de 5 dias corridos\n"
+            "- Não pode haver sobreposição com férias já aprovadas"
+        ),
+    ),
+    retrieve=extend_schema(
+        tags=["Gestão de Férias"],
+        summary="Detalhar solicitação de férias",
+        description="Retorna os dados completos de uma solicitação pelo seu ID.",
+    ),
+    update=extend_schema(
+        tags=["Gestão de Férias"],
+        summary="Atualizar solicitação de férias (PUT)",
+        description="Substitui todos os campos de uma solicitação. Permitido apenas para solicitações `pendentes`.",
+    ),
+    partial_update=extend_schema(
+        tags=["Gestão de Férias"],
+        summary="Atualizar solicitação de férias parcialmente (PATCH)",
+        description="Atualiza apenas os campos informados. Permitido apenas para solicitações `pendentes`.",
+    ),
+    destroy=extend_schema(
+        tags=["Gestão de Férias"],
+        summary="Excluir solicitação de férias",
+        description=(
+            "Remove permanentemente uma solicitação de férias.\n\n"
+            "> **Atenção:** permitido apenas para solicitações com status `pendente`."
+        ),
+    ),
+)
 class SolicitacaoFeriasViewSet(viewsets.ModelViewSet):
     queryset = SolicitacaoFerias.objects.select_related('id_funcionario').all()
     serializer_class = SolicitacaoFeriasSerializer
@@ -68,6 +120,15 @@ class SolicitacaoFeriasViewSet(viewsets.ModelViewSet):
     filterset_fields = ['id_funcionario', 'status']
     ordering_fields = ['data_solicitacao', 'data_inicio']
 
+    @extend_schema(
+        tags=["Gestão de Férias"],
+        summary="Aprovar solicitação de férias",
+        description=(
+            "Altera o status da solicitação de `pendente` para `aprovada`.\n\n"
+            "**Permissão exigida:** usuário de RH com cargo de nível 4, 5 ou 6.\n\n"
+            "É possível incluir uma `observacao` opcional no corpo da requisição."
+        ),
+    )
     @action(detail=True, methods=['patch'], url_path='aprovar')
     def aprovar(self, request, pk=None):
         if not _user_can_decide_ferias(request.user):
@@ -90,6 +151,15 @@ class SolicitacaoFeriasViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(solicitacao)
         return Response(serializer.data)
 
+    @extend_schema(
+        tags=["Gestão de Férias"],
+        summary="Recusar solicitação de férias",
+        description=(
+            "Altera o status da solicitação de `pendente` para `recusada`.\n\n"
+            "**Permissão exigida:** usuário de RH com cargo de nível 4, 5 ou 6.\n\n"
+            "É possível incluir uma `observacao` com o motivo da recusa no corpo da requisição."
+        ),
+    )
     @action(detail=True, methods=['patch'], url_path='recusar')
     def recusar(self, request, pk=None):
         if not _user_can_decide_ferias(request.user):
@@ -112,6 +182,8 @@ class SolicitacaoFeriasViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(solicitacao)
         return Response(serializer.data)
 
+
+# ── Views web (templates Django) — sem alterações ─────────────────────────────
 
 @login_required
 def ferias_list(request):
@@ -198,7 +270,7 @@ def ferias_create(request):
 
         funcionario = _get_funcionario_do_usuario(request.user)
         if funcionario is None:
-            messages.error(request, 'Não foi possível criar a solicitação porque seu usuário não está vinculado a um funcionário.')
+            messages.error(request, 'Seu usuário não está vinculado a um funcionário.')
             return render(request, 'ferias/form.html')
 
         erro = _validate_periodo_ferias(funcionario, d_inicio, d_fim)

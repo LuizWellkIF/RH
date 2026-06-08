@@ -1,3 +1,6 @@
+# cargo/views.py
+from drf_spectacular.utils import extend_schema_view, extend_schema
+
 from rest_framework import viewsets, filters
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import render, get_object_or_404, redirect
@@ -8,6 +11,48 @@ from .serializers import CargoSerializer
 from departamentos.models import Departamento
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Cargos"],
+        summary="Listar cargos",
+        description=(
+            "Retorna a lista paginada de todos os cargos cadastrados.\n\n"
+            "**Filtros disponíveis:**\n"
+            "- `id_departamento` – filtra pelo ID do departamento\n"
+            "- `nivel` – filtra pelo nível hierárquico do cargo\n\n"
+            "**Busca:** campo `search` pesquisa em `nome` e `descricao`.\n\n"
+            "**Ordenação:** parâmetro `ordering` aceita `nome` e `nivel`."
+        ),
+    ),
+    create=extend_schema(
+        tags=["Cargos"],
+        summary="Criar cargo",
+        description="Cadastra um novo cargo vinculado a um departamento.",
+    ),
+    retrieve=extend_schema(
+        tags=["Cargos"],
+        summary="Detalhar cargo",
+        description="Retorna os dados completos de um cargo pelo seu ID.",
+    ),
+    update=extend_schema(
+        tags=["Cargos"],
+        summary="Atualizar cargo (PUT)",
+        description="Substitui todos os campos de um cargo existente.",
+    ),
+    partial_update=extend_schema(
+        tags=["Cargos"],
+        summary="Atualizar cargo parcialmente (PATCH)",
+        description="Atualiza apenas os campos informados no corpo da requisição.",
+    ),
+    destroy=extend_schema(
+        tags=["Cargos"],
+        summary="Excluir cargo",
+        description=(
+            "Remove permanentemente um cargo.\n\n"
+            "> **Atenção:** não é possível excluir um cargo com funcionários vinculados."
+        ),
+    ),
+)
 class CargoViewSet(viewsets.ModelViewSet):
     queryset = Cargo.objects.select_related('id_departamento').all()
     serializer_class = CargoSerializer
@@ -16,6 +61,8 @@ class CargoViewSet(viewsets.ModelViewSet):
     search_fields = ['nome', 'descricao']
     ordering_fields = ['nome', 'nivel']
 
+
+# ── Views web (templates Django) — sem alterações ─────────────────────────────
 
 @login_required
 def cargo_list(request):
@@ -153,4 +200,4 @@ def cargo_delete(request, pk):
             messages.error(request, 'Não é possível excluir um cargo com funcionários vinculados.')
         return redirect('cargo_list')
 
-    return render(request, 'cargo/confirm_delete.html', {'object': cargo}) 
+    return render(request, 'cargo/confirm_delete.html', {'object': cargo})

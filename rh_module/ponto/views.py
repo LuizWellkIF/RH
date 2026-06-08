@@ -1,3 +1,7 @@
+# ponto/views.py
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiParameter
+from drf_spectacular.types import OpenApiTypes
+
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -12,6 +16,44 @@ from .serializers import RegistroPontoSerializer
 from funcionarios.models import Funcionario
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Controle de Ponto"],
+        summary="Listar registros de ponto",
+        description=(
+            "Retorna a lista paginada de todos os registros de ponto.\n\n"
+            "**Filtros disponíveis:**\n"
+            "- `id_funcionario` – filtra pelos registros de um funcionário específico\n"
+            "- `tipo` – filtra pelo tipo do registro (`entrada`, `saida`, `pausa`)\n\n"
+            "**Ordenação:** parâmetro `ordering` aceita `data_hora`."
+        ),
+    ),
+    create=extend_schema(
+        tags=["Controle de Ponto"],
+        summary="Registrar ponto",
+        description="Cria um novo registro de ponto para um funcionário.",
+    ),
+    retrieve=extend_schema(
+        tags=["Controle de Ponto"],
+        summary="Detalhar registro de ponto",
+        description="Retorna os dados de um registro de ponto pelo seu ID.",
+    ),
+    update=extend_schema(
+        tags=["Controle de Ponto"],
+        summary="Atualizar registro de ponto (PUT)",
+        description="Substitui todos os campos de um registro de ponto existente.",
+    ),
+    partial_update=extend_schema(
+        tags=["Controle de Ponto"],
+        summary="Atualizar registro de ponto parcialmente (PATCH)",
+        description="Atualiza apenas os campos informados no corpo da requisição.",
+    ),
+    destroy=extend_schema(
+        tags=["Controle de Ponto"],
+        summary="Excluir registro de ponto",
+        description="Remove permanentemente um registro de ponto.",
+    ),
+)
 class RegistroPontoViewSet(viewsets.ModelViewSet):
     queryset = RegistroPonto.objects.select_related('id_funcionario').all()
     serializer_class = RegistroPontoSerializer
@@ -19,9 +61,26 @@ class RegistroPontoViewSet(viewsets.ModelViewSet):
     filterset_fields = ['id_funcionario', 'tipo']
     ordering_fields = ['data_hora']
 
+    @extend_schema(
+        tags=["Controle de Ponto"],
+        summary="Espelho mensal de ponto",
+        description=(
+            "Retorna todos os registros de ponto do **mês corrente** de um funcionário, "
+            "junto com o total de marcações e o mês de referência.\n\n"
+            "**Parâmetro obrigatório:** `funcionario` (ID do funcionário)."
+        ),
+        parameters=[
+            OpenApiParameter(
+                name='funcionario',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.QUERY,
+                required=True,
+                description="ID do funcionário cujo espelho mensal se deseja consultar.",
+            )
+        ],
+    )
     @action(detail=False, methods=['get'], url_path='espelho')
     def espelho_mensal(self, request):
-        """Retorna todos os registros do mês atual de um funcionário."""
         funcionario_id = request.query_params.get('funcionario')
         if not funcionario_id:
             return Response({'erro': 'Informe o parâmetro funcionario.'}, status=400)
@@ -42,9 +101,10 @@ class RegistroPontoViewSet(viewsets.ModelViewSet):
         })
 
 
+# ── Views web (templates Django) — sem alterações ─────────────────────────────
+
 @login_required
 def bate_ponto_view(request):
-    """Tela web estilo SouGov para registrar ponto (entrada/saída/entrada/saída) e exibir total trabalhado."""
     server_now = timezone.localtime(timezone.now())
     today = timezone.localdate()
 
@@ -74,10 +134,7 @@ def bate_ponto_view(request):
             .order_by('data_hora')
         )
 
-    entrada1 = None
-    saida1 = None
-    entrada2 = None
-    saida2 = None
+    entrada1 = saida1 = entrada2 = saida2 = None
 
     if funcionario:
         entrada1 = registros_dia.filter(tipo='entrada').first()
@@ -116,8 +173,7 @@ def bate_ponto_view(request):
         return f'{hours:02d}:{minutes:02d}:{seconds:02d}'
 
     can_register = bool(funcionario) and total_punches < 4
-    next_tipo = None
-    next_label = None
+    next_tipo = next_label = None
 
     if funcionario and total_punches >= 4:
         next_label = 'Dia completo'
@@ -138,10 +194,7 @@ def bate_ponto_view(request):
         next_label = dict(tipos).get(next_tipo, 'Registrar')
 
     form_errors = {}
-    form_values = {
-        'id_funcionario': funcionario_id,
-        'observacao': '',
-    }
+    form_values = {'id_funcionario': funcionario_id, 'observacao': ''}
 
     if request.method == 'POST':
         form_values['observacao'] = (request.POST.get('observacao') or '').strip()
@@ -149,7 +202,7 @@ def bate_ponto_view(request):
         if not funcionario:
             messages.error(request, 'Selecione um funcionário para registrar o ponto.')
         elif total_punches >= 4:
-            messages.warning(request, 'Já existem 4 marcações (entrada/saída) registradas hoje para este funcionário.')
+            messages.warning(request, 'Já existem 4 marcações registradas hoje para este funcionário.')
         else:
             payload = {
                 'id_funcionario': funcionario.id_funcionario,
@@ -167,9 +220,7 @@ def bate_ponto_view(request):
             form_errors = serializer.errors
 
     def to_epoch_ms(dt):
-        if not dt:
-            return None
-        return int(dt.timestamp() * 1000)
+        return int(dt.timestamp() * 1000) if dt else None
 
     tz_offset = server_now.utcoffset()
     clock_payload = {
@@ -188,10 +239,10 @@ def bate_ponto_view(request):
         'funcionario': funcionario,
         'funcionario_id': funcionario_id,
         'slots': [
-            {'label': 'Entrada', 'dt': entrada1.data_hora if entrada1 else None},
-            {'label': 'Saída (intervalo)', 'dt': saida1.data_hora if saida1 else None},
+            {'label': 'Entrada',           'dt': entrada1.data_hora if entrada1 else None},
+            {'label': 'Saída (intervalo)', 'dt': saida1.data_hora  if saida1  else None},
             {'label': 'Entrada (retorno)', 'dt': entrada2.data_hora if entrada2 else None},
-            {'label': 'Saída (fim)', 'dt': saida2.data_hora if saida2 else None},
+            {'label': 'Saída (fim)',        'dt': saida2.data_hora  if saida2  else None},
         ],
         'total_trabalhado': format_hms(total_seconds),
         'total_punches': total_punches,
@@ -206,7 +257,6 @@ def bate_ponto_view(request):
 
 @login_required
 def ponto_consultas_view(request):
-    """Tela web para consumir endpoints do módulo de ponto (GET/DELETE/espelho) via JS."""
     funcionarios = Funcionario.objects.select_related('id_departamento', 'id_cargo').order_by('nome')
     context = {
         'funcionarios': funcionarios,

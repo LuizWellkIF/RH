@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django_filters',
+    'drf_spectacular',
     'departamentos',
     'cargo',
     'funcionarios',
@@ -56,9 +57,37 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/login/'
 
 REST_FRAMEWORK = {
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 20,
+}
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API do Sistema de RH',
+    'DESCRIPTION': (
+        'Documentação completa dos endpoints do sistema de Recursos Humanos.'
+    ),
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'COERCE_DECIMAL_TO_STRING': False,
+    # Ordena os grupos (tags) no Swagger UI em ordem alfabética
+    'SORT_OPERATIONS': False,
+    # Define a ordem de exibição das tags no menu lateral
+    'TAGS': [
+        {'name': 'Cargos',            'description': 'Cadastro e gestão de cargos vinculados a departamentos.'},
+        {'name': 'Departamentos',     'description': 'Cadastro e gestão dos departamentos da empresa.'},
+        {'name': 'Funcionários',      'description': 'Cadastro completo de funcionários, incluindo relatório por departamento e status.'},
+        {'name': 'Controle de Ponto', 'description': 'Registro de entradas e saídas, e espelho mensal de ponto por funcionário.'},
+        {'name': 'Gestão de Férias',  'description': 'Solicitação, aprovação e recusa de períodos de férias.'},
+    ],
+    # Idioma da interface do Swagger UI
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'displayRequestDuration': True,
+        'filter': True,
+    },
+    'LANGUAGE': 'pt-br',
 }
 
 MIDDLEWARE = [
@@ -128,9 +157,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = 'pt-br'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Sao_Paulo'
 
 USE_I18N = True
 

@@ -1,8 +1,9 @@
+# funcionarios/views.py
+from drf_spectacular.utils import extend_schema_view, extend_schema
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
-from django.contrib.auth.password_validation import get_password_validators
-from django.core.management import call_command
 from django.db.models import Count, Q
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
@@ -26,14 +27,12 @@ def _criar_usuario_para_funcionario(funcionario: Funcionario) -> User:
     email = funcionario.email
     username = email.split('@')[0]
 
-    # Garante unicidade do username
     contador = 1
     username_base = username
     while User.objects.filter(username=username).exists():
         username = f"{username_base}{contador}"
         contador += 1
 
-    # Cria o usuário com senha aleatória (será alterada no primeiro acesso)
     password = get_random_string(12)
     user = User.objects.create_user(
         username=username,
@@ -43,7 +42,6 @@ def _criar_usuario_para_funcionario(funcionario: Funcionario) -> User:
         password=password
     )
 
-    # Cria o perfil do usuário
     UserProfile.objects.create(
         user=user,
         funcionario=funcionario,
@@ -53,6 +51,49 @@ def _criar_usuario_para_funcionario(funcionario: Funcionario) -> User:
     return user
 
 
+@extend_schema_view(
+    list=extend_schema(
+        tags=["Funcionários"],
+        summary="Listar funcionários",
+        description=(
+            "Retorna a lista paginada de todos os funcionários cadastrados.\n\n"
+            "**Filtros disponíveis:**\n"
+            "- `status` – filtra pelo status do funcionário (ex: `ativo`, `inativo`)\n"
+            "- `id_departamento` – filtra pelo ID do departamento\n"
+            "- `id_cargo` – filtra pelo ID do cargo\n\n"
+            "**Busca:** campo `search` pesquisa em `nome`, `cpf` e `email`.\n\n"
+            "**Ordenação:** parâmetro `ordering` aceita `nome`, `data_admissao` e `salario`."
+        ),
+    ),
+    create=extend_schema(
+        tags=["Funcionários"],
+        summary="Cadastrar funcionário",
+        description="Cadastra um novo funcionário no sistema.",
+    ),
+    retrieve=extend_schema(
+        tags=["Funcionários"],
+        summary="Detalhar funcionário",
+        description="Retorna os dados completos de um funcionário pelo seu ID.",
+    ),
+    update=extend_schema(
+        tags=["Funcionários"],
+        summary="Atualizar funcionário (PUT)",
+        description="Substitui todos os campos de um funcionário existente.",
+    ),
+    partial_update=extend_schema(
+        tags=["Funcionários"],
+        summary="Atualizar funcionário parcialmente (PATCH)",
+        description="Atualiza apenas os campos informados no corpo da requisição.",
+    ),
+    destroy=extend_schema(
+        tags=["Funcionários"],
+        summary="Excluir funcionário",
+        description=(
+            "Remove permanentemente um funcionário e seu usuário de acesso vinculado.\n\n"
+            "> **Atenção:** a exclusão é irreversível e remove todos os registros associados."
+        ),
+    ),
+)
 class FuncionarioViewSet(viewsets.ModelViewSet):
     queryset = Funcionario.objects.select_related(
         'id_cargo', 'id_departamento'
@@ -63,9 +104,19 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
     search_fields = ['nome', 'cpf', 'email']
     ordering_fields = ['nome', 'data_admissao', 'salario']
 
+    @extend_schema(
+        tags=["Funcionários"],
+        summary="Relatório de funcionários",
+        description=(
+            "Retorna um resumo estatístico dos funcionários cadastrados.\n\n"
+            "**Dados retornados:**\n"
+            "- `por_departamento` – contagem de funcionários agrupados por departamento\n"
+            "- `por_status` – contagem agrupada por status (ativo, inativo etc.)\n"
+            "- `total_geral` – total absoluto de funcionários cadastrados"
+        ),
+    )
     @action(detail=False, methods=['get'], url_path='relatorio')
     def relatorio(self, request):
-        """Retorna contagem de funcionários agrupados por departamento e status."""
         por_departamento = (
             Funcionario.objects
             .values('id_departamento__nome')
@@ -84,7 +135,7 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
         })
 
 
-# ── Views Web (templates) ─────────────────────────────────────────────────────
+# ── Views web (templates Django) — sem alterações ─────────────────────────────
 
 @login_required
 def funcionarios_list_view(request):
@@ -132,13 +183,8 @@ def funcionario_create_view(request):
     if request.method == 'POST' and form.is_valid():
         funcionario = form.save()
 
-        # Cria usuário Django automaticamente
         try:
             usuario_criado = _criar_usuario_para_funcionario(funcionario)
-            email = funcionario.email
-            username = email.split('@')[0]
-
-            # Gera senha aleatória
             senha_gerada = get_random_string(12)
             usuario_criado.set_password(senha_gerada)
             usuario_criado.save()
@@ -190,8 +236,8 @@ def funcionario_delete_view(request, pk: int):
 
     if request.method == 'POST':
         try:
-            nome_funcionario = funcionario.nome  # Salva antes de deletar
-            funcionario.delete()  # Deleta func + cascata deleta user + profile
+            nome_funcionario = funcionario.nome
+            funcionario.delete()
             messages.success(request, f'Funcionário "{nome_funcionario}" removido com sucesso!')
             return redirect('funcionarios_list')
         except ProtectedError:
@@ -199,5 +245,5 @@ def funcionario_delete_view(request, pk: int):
             return redirect('funcionarios_list')
 
     return render(request, 'funcionarios/confirm_delete.html', {
-    'funcionario': funcionario,
+        'funcionario': funcionario,
     })
