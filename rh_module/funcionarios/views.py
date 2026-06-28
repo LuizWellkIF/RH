@@ -18,6 +18,7 @@ from autenticacao.models import UserProfile
 from .models import Funcionario
 from .serializers import FuncionarioSerializer
 from .forms import FuncionarioForm
+from .services import FuncionariosAPIError, listar_cargos, listar_funcionarios
 
 
 def _criar_usuario_para_funcionario(funcionario: Funcionario) -> User:
@@ -144,32 +145,81 @@ def funcionarios_list_view(request):
     departamento_id = (request.GET.get('departamento') or '').strip()
     cargo_id = (request.GET.get('cargo') or '').strip()
 
-    queryset = Funcionario.objects.select_related('id_cargo', 'id_departamento').all()
+    api_source = False
+    api_error = None
 
-    if q:
-        queryset = queryset.filter(
-            Q(nome__icontains=q)
-            | Q(cpf__icontains=q)
-            | Q(email__icontains=q)
+    try:
+        funcionarios = listar_funcionarios()
+        cargos = listar_cargos(funcionarios=funcionarios)
+        departamentos = sorted(
+            {f.id_departamento.id_departamento: f.id_departamento for f in funcionarios}.values(),
+            key=lambda dep: dep.nome,
         )
+        api_source = True
 
-    if status:
-        queryset = queryset.filter(status=status)
+        if q:
+            termo = q.lower()
+            funcionarios = [
+                funcionario for funcionario in funcionarios
+                if termo in funcionario.nome.lower()
+                or termo in funcionario.cpf.lower()
+                or termo in funcionario.email.lower()
+            ]
 
-    if departamento_id.isdigit():
-        queryset = queryset.filter(id_departamento_id=int(departamento_id))
+        if status:
+            funcionarios = [
+                funcionario for funcionario in funcionarios
+                if funcionario.status == status
+            ]
 
-    if cargo_id.isdigit():
-        queryset = queryset.filter(id_cargo_id=int(cargo_id))
+        if departamento_id.isdigit():
+            funcionarios = [
+                funcionario for funcionario in funcionarios
+                if str(funcionario.id_departamento.id_departamento) == departamento_id
+            ]
+
+        if cargo_id.isdigit():
+            funcionarios = [
+                funcionario for funcionario in funcionarios
+                if str(funcionario.id_cargo.id_cargo) == cargo_id
+            ]
+
+        funcionarios = sorted(funcionarios, key=lambda funcionario: funcionario.nome)
+        cargos = sorted(cargos, key=lambda cargo: cargo.nome)
+    except FuncionariosAPIError as exc:
+        api_error = str(exc)
+        queryset = Funcionario.objects.select_related('id_cargo', 'id_departamento').all()
+
+        if q:
+            queryset = queryset.filter(
+                Q(nome__icontains=q)
+                | Q(cpf__icontains=q)
+                | Q(email__icontains=q)
+            )
+
+        if status:
+            queryset = queryset.filter(status=status)
+
+        if departamento_id.isdigit():
+            queryset = queryset.filter(id_departamento_id=int(departamento_id))
+
+        if cargo_id.isdigit():
+            queryset = queryset.filter(id_cargo_id=int(cargo_id))
+
+        funcionarios = queryset.order_by('nome')
+        departamentos = Departamento.objects.order_by('nome')
+        cargos = Cargo.objects.select_related('id_departamento').order_by('nome')
 
     context = {
-        'funcionarios': queryset.order_by('nome'),
-        'departamentos': Departamento.objects.order_by('nome'),
-        'cargos': Cargo.objects.select_related('id_departamento').order_by('nome'),
+        'funcionarios': funcionarios,
+        'departamentos': departamentos,
+        'cargos': cargos,
         'q': q,
         'status': status,
         'departamento_id': departamento_id,
         'cargo_id': cargo_id,
+        'api_source': api_source,
+        'api_error': api_error,
     }
     return render(request, 'funcionarios/list.html', context)
 

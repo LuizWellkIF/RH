@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Cargos — RH Sistema{% endblock %}
+{% block title %}Cargos - RH Sistema{% endblock %}
 {% block topbar_title %}Cargos{% endblock %}
 
 {% block content %}
@@ -9,10 +9,16 @@
     <h1>Cargos</h1>
     <p>Gerenciar todos os cargos da empresa.</p>
   </div>
-  {% if user.profile.is_gerente %}
+  {% if user.profile.is_gerente and not api_source %}
   <a href="{% url 'cargo_create' %}" class="btn btn-primary">+ Novo Cargo</a>
   {% endif %}
 </div>
+
+{% if api_source %}
+<div class="msg success" style="margin-bottom:16px;">Dados carregados da API externa de cargos.</div>
+{% elif api_error %}
+<div class="msg warning" style="margin-bottom:16px;">API externa indisponivel: {{ api_error }} Usando dados locais.</div>
+{% endif %}
 
 <div class="card">
   <div class="card-body" style="padding:0;">
@@ -45,9 +51,11 @@
           <tr>
             <th>Cargo</th>
             <th>Departamento</th>
-            <th>Nível</th>
-            <th>Funcionários</th>
-            <th style="width:100px;">Ações</th>
+            <th>Nivel</th>
+            <th>Funcionarios</th>
+            {% if not api_source %}
+            <th style="width:100px;">Acoes</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -55,9 +63,13 @@
           <tr>
             <td style="font-weight:500;">{{ cargo.nome }}</td>
             <td>
+              {% if api_source %}
+                {{ cargo.id_departamento.sigla }}
+              {% else %}
               <a href="{% url 'departamento_detail' cargo.id_departamento.pk %}" style="color:var(--text-link);">
                 {{ cargo.id_departamento.sigla }}
               </a>
+              {% endif %}
             </td>
             <td>
               <span class="badge badge-neutral">{{ cargo.get_nivel_display }}</span>
@@ -65,15 +77,17 @@
             <td style="text-align:center;">
               {{ cargo.funcionarios.count }}
             </td>
+            {% if not api_source %}
             <td>
               <div style="display:flex; gap:8px; justify-content:flex-end;">
-                <a href="{% url 'cargo_detail' cargo.pk %}" class="btn btn-sm btn-secondary" title="Ver">👁</a>
+                <a href="{% url 'cargo_detail' cargo.pk %}" class="btn btn-sm btn-secondary" title="Ver">Ver</a>
                 {% if user.profile.is_gerente %}
-                <a href="{% url 'cargo_edit' cargo.pk %}" class="btn btn-sm btn-secondary" title="Editar">✎</a>
-                <a href="{% url 'cargo_delete' cargo.pk %}" class="btn btn-sm btn-secondary" title="Deletar">🗑</a>
+                <a href="{% url 'cargo_edit' cargo.pk %}" class="btn btn-sm btn-secondary" title="Editar">Editar</a>
+                <a href="{% url 'cargo_delete' cargo.pk %}" class="btn btn-sm btn-secondary" title="Deletar">Excluir</a>
                 {% endif %}
               </div>
             </td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>

@@ -1,15 +1,17 @@
 {% extends 'base.html' %}
 
-{% block title %}Funcionários — RH Sistema{% endblock %}
-{% block topbar_title %}Funcionários{% endblock %}
+{% block title %}Funcionarios - RH Sistema{% endblock %}
+{% block topbar_title %}Funcionarios{% endblock %}
 
 {% block content %}
 <div class="page-header">
   <div>
-    <h1>Funcionários</h1>
+    <h1>Funcionarios</h1>
     <p>Cadastro e consulta de colaboradores</p>
   </div>
-  <a href="{% url 'funcionario_create' %}" class="btn btn-primary">+ Novo Funcionário</a>
+  {% if not api_source %}
+  <a href="{% url 'funcionario_create' %}" class="btn btn-primary">+ Novo Funcionario</a>
+  {% endif %}
 </div>
 
 <div class="card" style="margin-bottom:16px;">
@@ -65,6 +67,12 @@
   </div>
 </div>
 
+{% if api_source %}
+<div class="msg success" style="margin-bottom:16px;">Dados carregados da API externa de funcionarios.</div>
+{% elif api_error %}
+<div class="msg warning" style="margin-bottom:16px;">API externa indisponivel: {{ api_error }} Usando dados locais.</div>
+{% endif %}
+
 <div class="card">
   <div class="card-header">
     <span class="card-title">Lista</span>
@@ -79,7 +87,9 @@
           <th>Departamento</th>
           <th>Cargo</th>
           <th>Status</th>
-          <th style="width:180px">Ações</th>
+          {% if not api_source %}
+          <th style="width:180px">Acoes</th>
+          {% endif %}
         </tr>
       </thead>
       <tbody>
@@ -101,6 +111,7 @@
               <span class="badge badge-warn">Afastado</span>
             {% endif %}
           </td>
+          {% if not api_source %}
           <td>
             <div style="display:flex; gap:8px; align-items:center;">
               <a class="btn btn-secondary btn-sm" href="{% url 'funcionario_edit' func.id_funcionario %}">Editar</a>
@@ -110,11 +121,12 @@
               </form>
             </div>
           </td>
+          {% endif %}
         </tr>
         {% empty %}
         <tr>
-          <td colspan="6" style="text-align:center; color:var(--text-3); padding:32px 16px;">
-            Nenhum funcionário encontrado.
+          <td colspan="{% if api_source %}5{% else %}6{% endif %}" style="text-align:center; color:var(--text-3); padding:32px 16px;">
+            Nenhum funcionario encontrado.
           </td>
         </tr>
         {% endfor %}

@@ -9,6 +9,7 @@ from django.contrib import messages
 from .models import Cargo
 from .serializers import CargoSerializer
 from departamentos.models import Departamento
+from funcionarios.services import FuncionariosAPIError, listar_cargos, listar_funcionarios
 
 
 @extend_schema_view(
@@ -69,22 +70,53 @@ def cargo_list(request):
     search = request.GET.get('search', '')
     departamento_id = request.GET.get('departamento', '')
 
-    cargos = Cargo.objects.select_related('id_departamento').all()
+    api_source = False
+    api_error = None
 
-    if search:
-        cargos = cargos.filter(nome__icontains=search) | \
-                 cargos.filter(descricao__icontains=search)
+    try:
+        funcionarios = listar_funcionarios()
+        cargos = listar_cargos(funcionarios=funcionarios)
+        departamentos = sorted(
+            {cargo.id_departamento.id_departamento: cargo.id_departamento for cargo in cargos}.values(),
+            key=lambda dep: dep.nome,
+        )
+        api_source = True
 
-    if departamento_id:
-        cargos = cargos.filter(id_departamento=departamento_id)
+        if search:
+            termo = search.lower()
+            cargos = [
+                cargo for cargo in cargos
+                if termo in cargo.nome.lower()
+                or termo in (cargo.descricao or '').lower()
+            ]
 
-    departamentos = Departamento.objects.all()
+        if departamento_id:
+            cargos = [
+                cargo for cargo in cargos
+                if str(cargo.id_departamento.id_departamento) == str(departamento_id)
+            ]
+
+        cargos = sorted(cargos, key=lambda cargo: cargo.nome)
+    except FuncionariosAPIError as exc:
+        api_error = str(exc)
+        cargos = Cargo.objects.select_related('id_departamento').all()
+
+        if search:
+            cargos = cargos.filter(nome__icontains=search) | \
+                     cargos.filter(descricao__icontains=search)
+
+        if departamento_id:
+            cargos = cargos.filter(id_departamento=departamento_id)
+
+        departamentos = Departamento.objects.all()
 
     return render(request, 'cargo/list.html', {
         'cargos': cargos,
         'departamentos': departamentos,
         'search': search,
         'departamento_id': departamento_id,
+        'api_source': api_source,
+        'api_error': api_error,
     })
 
 

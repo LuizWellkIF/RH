@@ -16,7 +16,9 @@ import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+REPO_DIR = BASE_DIR.parent
 
+load_dotenv(REPO_DIR / '.env')
 load_dotenv(BASE_DIR / '.env')
 
 
@@ -181,3 +183,18 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
+
+FUNC_API_URL = os.getenv(
+    'FUNC_API_URL',
+    os.getenv('FUNCIONARIOS_API_BASE_URL', 'https://italonishikawa.pythonanywhere.com'),
+).rstrip('/')
+FUNCIONARIOS_API_BASE_URL = (
+    FUNC_API_URL if FUNC_API_URL.rstrip('/').endswith('/api') else f'{FUNC_API_URL}/api'
+)
+FUNCIONARIOS_API_TOKEN = os.getenv(
+    'FUNCIONARIOS_API_TOKEN',
+    os.getenv('FUNC_API_TOKEN', ''),
+)
+FUNCIONARIOS_API_USER = os.getenv('FUNC_API_USER', '')
+FUNCIONARIOS_API_PASS = os.getenv('FUNC_API_PASS', '')
+FUNCIONARIOS_API_TIMEOUT = int(os.getenv('FUNCIONARIOS_API_TIMEOUT', '10'))
