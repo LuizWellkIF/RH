@@ -130,3 +130,43 @@ def listar_cargos(params=None, funcionarios=None):
         cargo.funcionarios.count = totais.get(cargo.id_cargo, 0)
 
     return cargos
+
+
+def preencher_cargos_funcionarios(funcionarios, cargos):
+    cargos_por_id = {cargo.id_cargo: cargo for cargo in cargos}
+
+    for funcionario in funcionarios:
+        cargo = cargos_por_id.get(funcionario.id_cargo.id_cargo)
+        if cargo:
+            funcionario.id_cargo = cargo
+
+    return funcionarios
+
+
+def funcionario_to_dict(funcionario):
+    return {
+        'id_funcionario': funcionario.id_funcionario,
+        'nome': funcionario.nome,
+        'cpf': funcionario.cpf,
+        'email': funcionario.email,
+        'telefone': funcionario.telefone,
+        'data_admissao': funcionario.data_admissao,
+        'salario': funcionario.salario,
+        'status': funcionario.status,
+        'id_cargo': funcionario.id_cargo.id_cargo,
+        'cargo_nome': funcionario.id_cargo.nome,
+        'id_departamento': funcionario.id_departamento.id_departamento,
+        'departamento_nome': funcionario.id_departamento.nome,
+    }
+
+
+def cargo_to_dict(cargo):
+    return {
+        'id_cargo': cargo.id_cargo,
+        'id_departamento': cargo.id_departamento.id_departamento,
+        'departamento_nome': cargo.id_departamento.nome,
+        'nome': cargo.nome,
+        'descricao': cargo.descricao,
+        'nivel': cargo.nivel,
+        'nivel_display': cargo.nivel_display,
+    }

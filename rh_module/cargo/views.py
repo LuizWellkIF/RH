@@ -2,6 +2,7 @@
 from drf_spectacular.utils import extend_schema_view, extend_schema
 
 from rest_framework import viewsets, filters
+from rest_framework.response import Response
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -9,7 +10,12 @@ from django.contrib import messages
 from .models import Cargo
 from .serializers import CargoSerializer
 from departamentos.models import Departamento
-from funcionarios.services import FuncionariosAPIError, listar_cargos, listar_funcionarios
+from funcionarios.services import (
+    FuncionariosAPIError,
+    cargo_to_dict,
+    listar_cargos,
+    listar_funcionarios,
+)
 
 
 @extend_schema_view(
@@ -61,6 +67,13 @@ class CargoViewSet(viewsets.ModelViewSet):
     filterset_fields = ['id_departamento', 'nivel']
     search_fields = ['nome', 'descricao']
     ordering_fields = ['nome', 'nivel']
+
+    def list(self, request, *args, **kwargs):
+        try:
+            cargos = listar_cargos(params=request.query_params)
+            return Response([cargo_to_dict(cargo) for cargo in cargos])
+        except FuncionariosAPIError:
+            return super().list(request, *args, **kwargs)
 
 
 # ── Views web (templates Django) — sem alterações ─────────────────────────────

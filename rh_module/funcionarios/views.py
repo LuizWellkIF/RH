@@ -18,7 +18,13 @@ from autenticacao.models import UserProfile
 from .models import Funcionario
 from .serializers import FuncionarioSerializer
 from .forms import FuncionarioForm
-from .services import FuncionariosAPIError, listar_cargos, listar_funcionarios
+from .services import (
+    FuncionariosAPIError,
+    funcionario_to_dict,
+    listar_cargos,
+    listar_funcionarios,
+    preencher_cargos_funcionarios,
+)
 
 
 def _criar_usuario_para_funcionario(funcionario: Funcionario) -> User:
@@ -105,6 +111,15 @@ class FuncionarioViewSet(viewsets.ModelViewSet):
     search_fields = ['nome', 'cpf', 'email']
     ordering_fields = ['nome', 'data_admissao', 'salario']
 
+    def list(self, request, *args, **kwargs):
+        try:
+            funcionarios = listar_funcionarios(params=request.query_params)
+            cargos = listar_cargos()
+            preencher_cargos_funcionarios(funcionarios, cargos)
+            return Response([funcionario_to_dict(funcionario) for funcionario in funcionarios])
+        except FuncionariosAPIError:
+            return super().list(request, *args, **kwargs)
+
     @extend_schema(
         tags=["Funcionários"],
         summary="Relatório de funcionários",
@@ -151,6 +166,7 @@ def funcionarios_list_view(request):
     try:
         funcionarios = listar_funcionarios()
         cargos = listar_cargos(funcionarios=funcionarios)
+        preencher_cargos_funcionarios(funcionarios, cargos)
         departamentos = sorted(
             {f.id_departamento.id_departamento: f.id_departamento for f in funcionarios}.values(),
             key=lambda dep: dep.nome,
